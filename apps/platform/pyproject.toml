@@ -1,0 +1,37 @@
+[build-system]              # 必写:告诉 pip "用什么工具来构建这个包"
+requires = ["hatchling>=1.18.0"]
+build-backend = "hatchling.build"
+
+
+[project]                   # 项目元信息:名字、版本、依赖、作者……(PEP 621 标准)
+name = 'od-platform'
+dynamic = ['version']
+description = "ODPlatform — 目标检测开发平台核心引擎"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{ name = "XiaoLiang", email = 'sx12101184@qq.com'}]
+keywords = ["object-detection", "yolo", "deep-learning", "ml-platform"]
+dependencies = [
+    "colorlog>=6.10.1",      # 日志彩色(③日志工具篇用过)
+    "psutil>=7.2.2",        # 系统信息
+    "torch>=2.1.1",         # 深度学习框架
+    "ultralytics>=8.4.82",   # YOLO
+]
+
+[project.optional-dependencies]  # 可选的依赖组
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5.0",
+]
+
+[project.scripts]           # 命令行入口:让 pip install 后能敲 odp-transform 等命令
+odp-init = 'od_platform.cli.init_project:initialize_project'
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/od_platform"]
+
+[tool.hatch.version]
+path = "src/od_platform/_version.py"
