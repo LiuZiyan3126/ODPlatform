@@ -47,6 +47,7 @@ PROCESSED_DATA_DIR: Path = DATA_DIR / "processed"  # 派生的数据集,含冻�
 
 # 端私有资产
 CONFIGS_DIR: Path = APP_DIR / "configs"
+DATASET_CONFIGS_DIR: Path = CONFIGS_DIR / "datasets"
 LOGGING_DIR: Path = APP_DIR / "logging"
 UNIT_TEST_DIR: Path = APP_DIR / "tests"
 
@@ -75,7 +76,8 @@ def get_dirs_to_initialize() -> List[Path]:
         UNIT_TEST_DIR,
         DOCS_DIR,
         SCRIPTS_DIR,
-        META_LOGGING_DIR
+        META_LOGGING_DIR,
+        DATASET_CONFIGS_DIR
     ]
 
 def get_dirs_to_reset() -> List[Path]:
@@ -121,6 +123,17 @@ def is_protected(path: Path) -> bool:
     return False
 
 
+def dataset_processed_dir(name: str) -> Path:
+    """某数据集的派生根: data/processed/<name>/。
+
+    按数据集分桶(每个数据集独占一个根),多数据集互不覆盖——这是把 train/val/test
+    放进各自命名空间的关键。
+    """
+    return PROCESSED_DATA_DIR / name
+
+def dataset_yaml_path(name: str) -> Path:
+    """某数据集生成的 ultralytics yaml 路径: configs/datasets/<name>.yaml。"""
+    return DATASET_CONFIGS_DIR / f"{name}.yaml"
 
 
 
@@ -139,3 +152,13 @@ if __name__ == "__main__":
     print(f"UNIT TEST DIR = {UNIT_TEST_DIR}")
     for d in get_dirs_to_initialize():
         print(f"将要初始化的目录有: {d.relative_to(ROOT_DIR)}")
+
+
+
+
+
+
+
+
+
+
