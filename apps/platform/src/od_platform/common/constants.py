@@ -54,3 +54,7 @@ COVERAGE_SOFT_THRESHOLD = 0.9   # 低于此:仅警告,允许继续
 # —— 认识哪些图像扩展名(阶段 7,配对图与标注时用)————————————————
 # 只认 .jpg 会把 png/jpeg 的数据静默丢光,所以这里列全;新增格式往这里加即可。
 IMAGE_EXTENSIONS: Tuple[str, ...] = (".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp")
+
+# 标签对缺失警告的阈值
+PAIR_MISSING_ERROR_RATIO: float = 0.5  # 大于50%，直接error
+PAIR_MISSING_WARN_RATIO: float = 0.05   # 5-50%，仅警告, 0-5% 提示一下， 0% PASS

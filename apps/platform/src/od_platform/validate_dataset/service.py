@@ -5,6 +5,7 @@ import logging
 from typing import List
 
 from od_platform.validate_dataset.registry import (CheckContext, CheckEntry, CheckResult, CheckSeverity, get_all_checks)
+from od_platform.validate_dataset.snapshot import build_snapshot
 from od_platform.common.performance_utils import time_it
 
 logger = logging.getLogger(__name__)
@@ -12,6 +13,8 @@ logger = logging.getLogger(__name__)
 @time_it(name="所有检测耗时总结", logger_instance=logger, iterations=1)
 def run_all_checks(ctx: CheckContext) -> List[CheckResult]:
     """跑全部注册的check, 收集结果"""
+    if ctx.snapshot is None:
+        ctx.snapshot = build_snapshot(ctx.yaml_path)
     entries = get_all_checks()  # 拿到所有的检查
     logger.info(f"开始执行 {len(entries)} 个 checks")
     results: List[CheckResult] = []

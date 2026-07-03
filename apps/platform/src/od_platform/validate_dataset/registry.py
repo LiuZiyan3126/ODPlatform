@@ -51,6 +51,7 @@ class CheckResult:
 class CheckContext:
     """check函数的入参: 所有check函数的签名都是这个"""
     yaml_path: Path
+    snapshot: Any = None
 
 
 # ==================== 4. CheckEntry - 注册表条目 ====================
