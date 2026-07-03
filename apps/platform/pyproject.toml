@@ -32,6 +32,7 @@ odp-init = 'od_platform.cli.init_project:initialize_project'
 odp-reset = 'od_platform.cli.reset_project:main'
 odp-transform = 'od_platform.cli.transform_data:main'
 odp-validate = 'od_platform.cli.validate_data:main'
+odp-gen-config = 'od_platform.runtime_config.generator:main'
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/od_platform"]
