@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from argparse import Namespace
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from od_platform.common.paths import RUNTIME_CONFIGS_DIR
 from od_platform.runtime_config.loaders import YAMLLoader, CLILoader
@@ -28,7 +28,7 @@ from od_platform.runtime_config.infer import YOLOInferConfig
 
 def build_train_config(
     yaml_path: Optional[Union[str, Path]] = "train.yaml",
-    cli_args:  Optional[Namespace] = None,
+    cli_args:  Optional[Union[Namespace, Dict[str, Any]]] = None,
     *,
     dry_run: bool = False,
 ) -> Tuple[Optional[YOLOTrainConfig], ConfigMerger]:
@@ -49,7 +49,7 @@ def build_train_config(
 
 def build_val_config(
     yaml_path: Optional[Union[str, Path]] = "val.yaml",
-    cli_args:  Optional[Namespace] = None,
+    cli_args:  Optional[Union[Namespace, Dict[str, Any]]] = None,
     *,
     dry_run: bool = False,
 ) -> Tuple[Optional[YOLOValConfig], ConfigMerger]:
@@ -71,7 +71,7 @@ def build_val_config(
 
 def build_infer_config(
     yaml_path: Optional[Union[str, Path]] = "infer.yaml",
-    cli_args:  Optional[Namespace] = None,
+    cli_args:  Optional[Union[Namespace, Dict[str, Any]]] = None,
     *,
     dry_run: bool = False,
 ) -> Tuple[Optional[YOLOInferConfig], ConfigMerger]:

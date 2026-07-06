@@ -410,8 +410,7 @@ class BaseConfig(BaseModel):
         groups: Dict[str, List[str]] = {}
         for field_name, field_info in self.__class__.model_fields.items():
             extra = field_info.json_schema_extra or {}
-            group_value = extra.get("group") if isinstance(extra, dict) else None
-            group = group_value if isinstance(group_value, str) else "其他"
+            group = extra.get("group", "其他") if isinstance(extra, dict) else "其他"
             groups.setdefault(group, []).append(field_name)
         return groups
 

@@ -98,11 +98,40 @@ class YAMLLoader:
 
 
 class CLILoader:
-    """从 argparse Namespace 提取配置参数 → dict."""
+    """
+    从命令行参数中加载配置
+    """
+    # 默认排除掉控制字段，不应该进配置
+    DEFAULT_EXCLUDE: set[str]= {
+        "help", 'config', "cfg", "yaml_path", 'debug', 'version'
+    }
 
-    CONTROL_FIELDS = {"config", "func", "command"}
+    def __init__(self, exclude: Optional[List[str]] = None,
+                mapping: Optional[Dict[str, str]] = None):
+        self.exclude = self.DEFAULT_EXCLUDE | set(exclude or [])
+        self.mapping = mapping or {}
 
-    def load(self, args: Namespace, *, exclude: Optional[set[str]] = None) -> Dict[str, Any]:
-        exclude = (exclude or set()) | self.CONTROL_FIELDS
-        raw = {k: v for k, v in vars(args).items() if k not in exclude}
-        return _drop_none(raw)     # None = "用户没在 CLI 给这个参数", 不覆盖
+    def load(self,args: Optional[Union[Namespace, Dict[str, Any]]] = None,
+            filter_none: bool = True) -> Dict[str, Any]:
+        if args is None:
+            args = {}
+        if isinstance(args, Namespace):
+            raw = vars(args)
+        elif isinstance(args, dict):
+            raw = args
+        else:
+            raise TypeError(f"参数类型错误: {type(args)}")
+
+        # 过滤 + 映射
+        result: Dict[str, Any] = {}
+        for key, value in raw.items():
+            # 排除控制字段 + 私有字段
+            if key in self.exclude or key.startswith("_"):
+                continue
+            if filter_none and value is None:
+                continue
+
+            # 参数名映射
+            mapped_key = self.mapping.get(key, key)
+            result[mapped_key] = value
+        return result

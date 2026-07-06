@@ -46,11 +46,9 @@ class ConfigMetadata:
         return self.source.value if isinstance(self.source, ConfigSource) else self.source
 
     def chain(self) -> List["ConfigMetadata"]:
-        result: List["ConfigMetadata"] = [self]
-        cur = self.overridden_from
+        result, cur = [self], self.overridden_from
         while cur:
-            result.append(cur)
-            cur = cur.overridden_from
+            result.append(cur); cur = cur.overridden_from
         return result
 
     def chain_str(self) -> str:
@@ -178,7 +176,7 @@ class ConfigMerger:
             for error in e.errors():
                 field_name = error.get("loc", [])
                 if field_name:
-                    key = str(field_name[0]) if isinstance(field_name, (list, tuple)) else str(field_name)
+                    key = field_name[0] if isinstance(field_name, (list, tuple)) else str(field_name)
                     meta = self._metadata.get(key)
                     if meta:
                         e.add_note(f"[溯源] {key}: {meta.chain_str()}")

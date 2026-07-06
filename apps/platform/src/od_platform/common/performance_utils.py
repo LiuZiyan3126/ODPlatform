@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 # @FileName  : performance_utils.py
-# @Author    : 雨霓同学
 # @Project   : ODPlatform
 # @Function  : 性能测量工具——@time_it 装饰器 (name 支持 callable 的兼容版)
 
@@ -10,7 +9,7 @@ import time
 from functools import wraps
 from typing import Callable, Optional, Union
 
-# 业务模块标准写法
+# 业务模块标准写法:拿一个以本模块命名的 logger,只管"发声"
 logger = logging.getLogger(__name__)
 
 
@@ -19,16 +18,13 @@ def time_it(
     name: Optional[Union[str, Callable[..., str]]] = None,
     logger_instance: logging.Logger = None,
 ):
-    """
-    通用执行时间测量装饰器。
+    """通用执行时间测量装饰器。
 
     name 可以传:
-        - None      : 用被装饰函数的 __name__ (老行为, 不变)
-        - str       : 固定显示名 (老行为, 不变)
-        - callable  : 一个接收"被装饰函数运行期实参"的函数, 返回显示名 (新增)
-                      用于每次调用名字不同的场景, 例如 D4 的逐 check 计时:
-                          @time_it(name=lambda entry, ctx: entry.name)
-                          def _safe_run_one(entry, ctx): ...
+        - None      : 用被装饰函数的 __name__
+        - str       : 固定显示名
+        - callable  : 一个接收"被装饰函数运行期实参"的函数,返回显示名
+                    用于每次调用名字不同的场景
 
     Examples:
         @time_it()
@@ -37,20 +33,15 @@ def time_it(
         @time_it(iterations=10, name="批量推理")
         def infer_batch(): ...
 
-        # 指定 logger:
         @time_it(logger_instance=logging.getLogger("my_module"))
         def custom(): ...
-
-        # 运行期动态取名 (callable):
-        @time_it(name=lambda entry, ctx: f"check:{entry.name}", logger_instance=logger)
-        def _safe_run_one(entry, ctx): ...
     """
-    # 默认用本模块的 __name__ logger;
-    # 调用方可以传一个特定 logger 进来(比如希望日志带着调用方的 logger 名)
+    # 默认用本模块的 logger;调用方可以传一个特定 logger 进来
+    # (比如希望日志带着调用方的 logger 名,一眼看出是谁报的耗时)
     log = logger_instance if logger_instance is not None else logger
 
     def _format_time_auto_unit(seconds: float) -> str:
-        """自动选择合适单位"""
+        """根据耗时长短,自动选择合适的单位,让数字好读。"""
         if seconds < 0.001:
             return f"{seconds * 1_000_000:.3f} 微秒"
         elif seconds < 1.0:
@@ -68,12 +59,12 @@ def time_it(
             return f"{hours:.0f} 小时 {mins:.0f} 分钟 {secs:.2f} 秒"
 
     def _resolve_name(func, args, kwargs) -> str:
-        # 只有 callable 才走"运行期取名"; str / None 完全保持老逻辑
+        # 只有 callable 才走"运行期取名"; str / None 完全保持简单逻辑
         if callable(name):
             try:
                 return name(*args, **kwargs)
             except Exception:
-                # 取名失败绝不能拖垮被测函数 —— 退回函数名, 测量照常进行
+                # 取名失败绝不能拖垮被测函数 —— 退回函数名,测量照常进行
                 log.warning(f"time_it: name() 计算失败, 回退到 {func.__name__}", exc_info=True)
                 return func.__name__
         if name is not None:
@@ -112,7 +103,7 @@ def time_it(
 
 
 if __name__ == "__main__":
-    # 自测时单独配一个简单 handler——真实使用中, CLI 入口已经配好了, 这里不用
+    # 自测:单独配一个简单 handler——真实使用中, CLI 入口已经配好了, 这里不用
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s",
                         datefmt="%H:%M:%S")
 

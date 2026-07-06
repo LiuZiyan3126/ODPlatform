@@ -3,7 +3,35 @@
 # @FileName  : string_utils.py
 # @Author    : 雨霓同学
 # @Project   : ODPlatform
-# @Function  : 字符串工具——CJK 感知的对齐 / 表格格式化
+# @Function  : 字符串工具——CJK 感知的对齐 / 表格格式化 / 字节大小格式化
+
+
+def format_size(bytes_size: int) -> str:
+    """将字节数格式化为人类可读的二进制单位 (IEC 标准)。
+
+    Args:
+        bytes_size: 字节数 (非负整数)
+
+    Returns:
+        格式化后的字符串，如 "1.50 GiB" / "256.00 KiB" / "0 B"
+
+    Examples:
+        >>> format_size(0)
+        '0 B'
+        >>> format_size(1024)
+        '1.00 KiB'
+        >>> format_size(2 * 1024**3)
+        '2.00 GiB'
+    """
+    if not isinstance(bytes_size, (int, float)) or bytes_size < 0:
+        return "N/A"
+    if bytes_size >= 1024 ** 3:
+        return f"{bytes_size / (1024 ** 3):.2f} GiB"
+    if bytes_size >= 1024 ** 2:
+        return f"{bytes_size / (1024 ** 2):.2f} MiB"
+    if bytes_size >= 1024:
+        return f"{bytes_size / 1024:.2f} KiB"
+    return f"{bytes_size} B"
 
 
 def get_display_width(text: str) -> int:

@@ -58,3 +58,9 @@ IMAGE_EXTENSIONS: Tuple[str, ...] = (".jpg", ".jpeg", ".png", ".bmp", ".tiff", "
 # 标签对缺失警告的阈值
 PAIR_MISSING_ERROR_RATIO: float = 0.5  # 大于50%，直接error
 PAIR_MISSING_WARN_RATIO: float = 0.05   # 5-50%，仅警告, 0-5% 提示一下， 0% PASS
+
+# Orphan-label thresholds.
+LABEL_ORPHAN_WARN_RATIO: float = 0.10
+
+# Empty-label thresholds.
+EMPTY_LABEL_WARN_RATIO: float = 0.20

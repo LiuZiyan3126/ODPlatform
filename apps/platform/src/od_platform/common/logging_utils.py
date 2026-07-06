@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 # @FileName  : logging_utils.py
-# @Author    : 雨霓同学
 # @Project   : ODPlatform
 # @Function  : 高度可配置的日志工具,创建独立日志文件 + 彩色控制台输出
 #
@@ -34,45 +33,28 @@ def get_logger(
     encoding: str = "utf-8",
     logger_name: str = ROOT_LOGGER_NAME,
 ) -> logging.Logger:
-    """
-    配置项目【根 logger】, 挂上 console + file handler。
-
-    设计要点:
-        - 默认 logger_name = "od_platform" (顶层包名),
-          与业务模块的 getLogger(__name__) 形成 logger 树
-        - 业务模块的日志会通过冒泡机制自动来到这里, 被本函数挂的 handler 处理
-        - 重复调用幂等 (检查 handlers 是否已配置, 避免重复挂)
+    """配置项目【根 logger】, 挂上 console + file handler。
 
     Args:
         base_path: 日志根目录(通常是 paths.LOGGING_DIR)
-        log_type: 日志类型,如 "init_project" / "train" / "val"
+        log_type:  日志类型,如 "init_project" / "train" / "val"
         model_name: 模型名(如 "yolo11n"),会拼到日志文件名里
         log_level: 日志级别(默认 INFO)
-        temp_log: 是否标记为临时日志(文件名前缀变成 "temp")
-        encoding: 文件编码(默认 utf-8)
-        logger_name: 要配置的 logger 名 (默认是根 logger "od_platform";
-                     特殊场景可以传别的名字配出独立 logger, 比如某个子系统想要
-                     "od_platform.audit.xxx" 这样的隔离子树, 让它的日志单独成一棵、
-                     不与主 logger 混在一起)
-
-    Returns:
-        配置好的 logging.Logger 实例
+        temp_log:  是否标记为临时日志(文件名前缀变成 "temp")
+        encoding:  文件编码(默认 utf-8)
+        logger_name: 要配置的 logger 名(默认是根 logger "od_platform")
     """
     # ============================================================
     # 1. 获取/复用命名 Logger
     # ============================================================
     logger = logging.getLogger(logger_name)
     # 幂等保护: getLogger 是 singleton——同一个 logger_name 多次调用拿到同一对象。
-    # 第一次调用配置好 handler 后, 后续调用直接返回, 避免重复挂多份 handler
-    # (重复挂 handler 会导致同一条日志被打印 N 遍)。
-    #
-    # 副作用: 第二次调用即使传了不同的 log_level / temp_log 也不再生效——这是有意为之。
-    # 整个进程只配置一次日志, 由 CLI 入口在最早时机调用一次完成。
+    # 第一次配好 handler 后, 后续调用直接返回, 避免重复挂(否则同一条日志被打 N 遍)。
     if logger.handlers:
         return logger
 
     logger.setLevel(log_level)
-    logger.propagate = False  # 根 logger 不再向上冒泡(避免与 Python 默认 root logger 重复输出)
+    logger.propagate = False  # 根 logger 不再向上冒泡(避免与 Python 默认 root 重复输出)
 
     # ============================================================
     # 2. 准备日志目录
@@ -95,10 +77,10 @@ def get_logger(
     log_file: Path = log_dir / ("_".join(filename_parts) + ".log")
 
     # ============================================================
-    # 4. 文件 Handler(完整格式, 含 logger 名)
+    # 4. 文件 Handler(完整格式, 含 logger 名 / 行号 / 函数名)
     # ============================================================
-    # %(name)s 字段会输出 logger 名, 比如 "od_platform.cli.init_project"
-    # 这是 getLogger(__name__) 设计带来的福利——一眼看出日志来源模块
+    # %(name)s 会输出 logger 名, 比如 "od_platform.cli.init_project"
+    # ——这正是 getLogger(__name__) 设计带来的福利:一眼看出日志来源模块
     file_formatter = logging.Formatter(
         fmt="%(asctime)s - %(name)s - %(levelname)-8s - "
             "%(filename)s:%(lineno)d - %(funcName)s - %(message)s",
@@ -153,15 +135,9 @@ if __name__ == "__main__":
     from od_platform.common.paths import LOGGING_DIR
 
     # 第一步: 装配根 logger 的 handler(这是 CLI 入口该做的事, 这里只是自测演示)
-    get_logger(
-        base_path=LOGGING_DIR,
-        log_type="test",
-        temp_log=True,
-    )
+    get_logger(base_path=LOGGING_DIR, log_type="test", temp_log=True)
 
     # 第二步: 业务代码就这样写——拿一个 __name__ logger, 直接发声
-    # 注意: 这里 __name__ 是 "__main__"(因为直接跑这个文件),
-    # 实际项目里它会是 "od_platform.common.logging_utils"
     test_logger = logging.getLogger(__name__)
     test_logger.debug("这是 DEBUG (默认 INFO 级别看不到)")
     test_logger.info("这是 INFO")
