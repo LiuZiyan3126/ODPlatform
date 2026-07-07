@@ -10,7 +10,7 @@ import argparse
 import logging
 import sys
 
-from od_platform.common.constants import  AnnotationFormat,SplitStrategy, Task
+from od_platform.common.constants import  AnnotationFormat, DEFAULT_SPLIT_MODE, SplitMode, SplitStrategy, Task
 from od_platform.data_pipeline.orchestrator import DatasetPipeline
 from od_platform.common.logging_utils import get_logger
 from od_platform.common.paths import LOGGING_DIR
@@ -32,6 +32,8 @@ def main(argv = None) -> int:
     p.add_argument("--dataset", required=True,help="数据集的名称")
     p.add_argument("--format", required=True,choices=AnnotationFormat.all(), dest="fmt")
     p.add_argument("--task", default=Task.DETECT, choices=Task.all())
+    p.add_argument("--split-mode", default=DEFAULT_SPLIT_MODE, choices=SplitMode.all(),
+                   help="resplit=转换后重新划分; preserve=保留已有 train/valid/test 划分")
     p.add_argument("--split-strategy", default=SplitStrategy.RANDOM, choices=SplitStrategy.all(),dest='strategy')
     p.add_argument("--classes", nargs="+", default=None, help="类别白名单")
     p.add_argument("--train-rate", type=float, default=0.8)
@@ -42,7 +44,7 @@ def main(argv = None) -> int:
 
     pipe = DatasetPipeline(
         a.dataset, a.fmt, task=a.task, train_rate=a.train_rate, val_rate=a.val_rate, classes=a.classes, split_strategy=a.strategy,
-        random_state=a.seed,
+        random_state=a.seed, split_mode=a.split_mode,
     )
     try:
         res = pipe.run()

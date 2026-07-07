@@ -42,6 +42,19 @@ class SplitStrategy:
 # —— 默认值(阶段 4)————————————————————————————————————————————————
 DEFAULT_SPLIT_STRATEGY = SplitStrategy.RANDOM   # 不指定 --split-strategy 时的默认
 
+
+class SplitMode:
+    """Dataset split workflow mode."""
+    RESPLIT = "resplit"
+    PRESERVE = "preserve"
+
+    @classmethod
+    def all(cls) -> Tuple[str, ...]:
+        return cls.RESPLIT, cls.PRESERVE
+
+
+DEFAULT_SPLIT_MODE = SplitMode.RESPLIT
+
 # —— 类别平衡报告的判级阈值(阶段 5)——————————————————————————————
 CLASS_MIN_IMAGES_HARD = 2     # 某类图数低于此,怎么分都进不全 train/val/test
 CLASS_MIN_BOXES_WARN = 20     # 框数低于此,样本太少大概率学不好

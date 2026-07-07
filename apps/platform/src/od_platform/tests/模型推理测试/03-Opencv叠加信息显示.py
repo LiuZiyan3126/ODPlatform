@@ -13,7 +13,7 @@ from ultralytics import YOLO
 
 
 if __name__ == "__main__":
-    model = YOLO('train3-20250704-165500-yolo11n-best.pt')
+    model = YOLO(r"C:\Users\Lenovo\Desktop\ODPlatform\models\trained\train-20260707-215522-yolo11n-best.pt")
     cap = cv2.VideoCapture(0)  # 自己打开摄像头
 
     frame_index = 0
