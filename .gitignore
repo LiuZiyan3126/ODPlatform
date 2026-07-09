@@ -91,3 +91,9 @@ temp/
 *.pkl
 *.h5
 *.npz
+*.zip
+*.pptx
+
+# 本地零散文件
+projects/
+.history/
