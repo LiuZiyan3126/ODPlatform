@@ -29,6 +29,7 @@ class InferenceWorker(BaseWorker):
         imgsz: int = 640,
         device: Optional[str] = None,
         save: bool = False,
+        sink: Any = None,
         parent=None,
     ) -> None:
         super().__init__(parent)
@@ -39,7 +40,7 @@ class InferenceWorker(BaseWorker):
         self._imgsz = imgsz
         self._device = device
         self._save = save
-        self._sink: Any = None
+        self._sink = sink
         self._cancel_token: Any = None
         self._start_time: float = 0.0
         self._frame_count = 0
@@ -55,7 +56,10 @@ class InferenceWorker(BaseWorker):
 
             from ..sinks.qt_signal_sink import QtSignalSink
 
-            self._sink = QtSignalSink()
+            if self._sink is None:
+                self._sink = QtSignalSink()
+            # 将 sink 的 frame_ready 信号桥接到 worker 的 frame_ready
+            self._sink.frame_ready.connect(self.frame_ready)
             self._cancel_token = CancelToken()
             self._start_time = time.perf_counter()
             self._frame_count = 0

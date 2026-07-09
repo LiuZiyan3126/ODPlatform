@@ -114,6 +114,8 @@ class ConfigEditorPage(QWidget):
         idx = self._file_combo.findText(default_name)
         if idx >= 0:
             self._file_combo.setCurrentIndex(idx)
+        else:
+            self._file_combo.setCurrentIndex(-1)  # 清空选择, 避免用错误的 config class 加载
         self._load_current()
 
     def _on_file_changed(self, filename: str) -> None:

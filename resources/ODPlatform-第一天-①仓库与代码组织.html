@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ODPlatform · 基础设施第一天 —— 仓库组织 / 装饰器 / 日志工具</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+<style>
+  :root{
+    --bg:#f4f7f8; --bg-2:#e9f0f1; --panel:#fff; --panel-2:#eff5f6;
+    --line:#dce6ea; --line-2:#c6d4d9;
+    --ink:#13242c; --ink-soft:#273a43; --dim:#54666f; --faint:#8497a0;
+    --cyan:#0d7d99; --green:#1f9d63; --amber:#b87d18; --violet:#5358d4; --rose:#c64b7a;
+    --code-bg:#f7f9fa; --code-line:#e4ebee;
+    --disp:'Archivo','Noto Sans SC',sans-serif;
+    --body:'Noto Sans SC',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink-soft);font-family:var(--body);line-height:1.8;font-weight:400;-webkit-font-smoothing:antialiased;font-size:15.5px}
+  ::selection{background:#bfe6ef;color:#06323d}
+  h1,h2,h3,h4{font-family:var(--disp);color:var(--ink);line-height:1.25;letter-spacing:-.01em}
+  a{color:var(--cyan);text-decoration:none}
+  code{font-family:var(--mono);font-size:.86em;background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--cyan)}
+  strong{color:var(--ink);font-weight:700}
+
+  /* —— 封面 —— */
+  .cover{background:linear-gradient(160deg,#0f2a33,#13343f 60%,#0d4250);color:#eaf3f5;padding:54px 0 44px;position:relative;overflow:hidden}
+  .cover:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:42px 42px;opacity:.6}
+  .cover-in{max-width:1180px;margin:0 auto;padding:0 40px;position:relative}
+  .crumb{font-family:var(--mono);font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:#6fd6ee}
+  .cover h1{font-family:var(--body);font-weight:900;font-size:clamp(1.9rem,4.4vw,2.9rem);letter-spacing:-.02em;margin:14px 0 12px;color:#fff;line-height:1.18}
+  .cover h1 .hl{color:#54d6f0}
+  .cover p{color:#bcd6dd;font-size:1.06rem;max-width:760px}
+  .cover .meta{font-family:var(--mono);font-size:.8rem;color:#7fd4e8;margin-top:18px}
+
+  .shell{max-width:1180px;margin:0 auto;padding:0 40px;display:grid;grid-template-columns:230px 1fr;gap:44px;align-items:start}
+  nav.toc{position:sticky;top:20px;align-self:start;font-size:13px;border-right:1px solid var(--line);padding:26px 16px 26px 0;max-height:calc(100vh - 40px);overflow:auto}
+  nav.toc .tt{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin:0 0 12px}
+  nav.toc a{display:block;color:var(--dim);padding:5px 0 5px 12px;border-left:2px solid transparent;line-height:1.4}
+  nav.toc a:hover{color:var(--cyan);border-left-color:var(--cyan)}
+  nav.toc a.sub{padding-left:24px;font-size:12px;color:var(--faint)}
+  main{padding:34px 0 90px;min-width:0;max-width:840px}
+
+  h2{font-size:1.7rem;margin:56px 0 6px;padding-top:24px;border-top:2px solid var(--line);scroll-margin-top:16px}
+  h2 .no{font-family:var(--mono);font-size:1rem;color:var(--cyan);font-weight:700;margin-right:12px}
+  h3{font-size:1.22rem;color:var(--ink);margin:34px 0 8px;scroll-margin-top:16px}
+  h4{font-size:1rem;font-weight:700;margin:20px 0 6px}
+  p{margin:11px 0}
+  .lead{font-size:1.05rem;color:var(--dim)}
+  ul,ol{margin:11px 0;padding-left:24px}
+  li{margin:6px 0}
+  li::marker{color:var(--cyan)}
+
+  /* —— 提示框 —— */
+  .box{border-left:3px solid var(--cyan);background:rgba(13,125,153,.06);padding:15px 18px;border-radius:0 10px 10px 0;margin:18px 0;font-size:.95rem}
+  .box .bt{font-family:var(--disp);font-weight:700;color:var(--ink);font-size:.95rem;margin-bottom:5px;display:flex;align-items:center;gap:7px}
+  .box.why{border-color:var(--cyan);background:rgba(13,125,153,.06)} .box.why .bt{color:#0b6680}
+  .box.biz{border-color:var(--green);background:rgba(31,157,99,.06)} .box.biz .bt{color:#17794c}
+  .box.trap{border-color:var(--amber);background:rgba(184,125,24,.08)} .box.trap .bt{color:#8a5e12}
+  .box.judge{border-color:var(--violet);background:rgba(83,88,212,.06)} .box.judge .bt{color:#3f44b0}
+  .box p{margin:6px 0}
+  .box p:first-of-type{margin-top:0}
+
+  /* —— 表格 —— */
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.6px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 2px rgba(19,36,44,.04)}
+  th,td{border:1px solid var(--line);padding:10px 13px;vertical-align:top;text-align:left}
+  thead th{background:#13343f;color:#eaf3f5;font-weight:600;font-size:12.8px}
+  tbody tr:nth-child(even){background:var(--panel-2)}
+  td b{color:var(--ink)}
+
+  /* —— 图 —— */
+  figure.fig{margin:24px 0;border:1px solid var(--line-2);border-radius:13px;background:#fff;overflow:hidden;box-shadow:0 2px 4px rgba(19,36,44,.04),0 14px 36px rgba(19,36,44,.05)}
+  figure.fig .frame{padding:22px 18px 8px;background:linear-gradient(180deg,#fbfdfd,#f4f9fa);overflow-x:auto}
+  figure.fig svg{display:block;width:100%;min-width:520px;height:auto;font-family:var(--mono)}
+  figure.fig figcaption{font-size:12.8px;color:var(--dim);padding:10px 18px;border-top:1px solid var(--line);background:var(--panel-2)}
+  figure.fig figcaption b{color:var(--cyan)}
+
+  /* —— 代码块 —— */
+  figure.code{margin:20px 0;border:1px solid var(--line-2);border-radius:12px;overflow:hidden;background:var(--code-bg);box-shadow:0 2px 4px rgba(19,36,44,.04)}
+  figure.code .chead{display:flex;align-items:center;gap:10px;padding:9px 15px;background:var(--panel-2);border-bottom:1px solid var(--line)}
+  figure.code .dots{display:flex;gap:6px}
+  figure.code .dots i{width:10px;height:10px;border-radius:50%;display:block}
+  figure.code .fname{font-family:var(--mono);font-size:.78rem;color:var(--ink-soft);font-weight:500}
+  figure.code .lang{margin-left:auto;font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  figure.code pre{margin:0;padding:16px 18px;overflow-x:auto}
+  figure.code code{font-family:var(--mono);font-size:12.6px;line-height:1.65;background:none;border:none;padding:0;color:#1c2b33;white-space:pre}
+  .hljs{background:transparent!important;padding:0!important}
+
+  hr.soft{border:0;border-top:1px solid var(--line);margin:30px 0}
+  footer{border-top:1px solid var(--line);background:#fff;padding:36px 0;text-align:center;color:var(--faint);font-size:12.5px;font-family:var(--mono)}
+
+  @media (max-width:1040px){
+    .shell{grid-template-columns:1fr;gap:0}
+    nav.toc{display:none}
+  }
+  @media print{
+    @page{size:A4;margin:13mm 11mm}
+    .cover{background:#13343f!important}
+    nav.toc{display:none}
+    .shell{grid-template-columns:1fr}
+    figure.fig,figure.code,table{box-shadow:none!important;page-break-inside:avoid;break-inside:avoid}
+    h2{page-break-after:avoid}
+    *{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════ COVER ══════════ -->
+<header class="cover"><div class="cover-in">
+  <div class="crumb">教学文档 · ODPlatform 基础设施第一天 · 之一 / 三</div>
+  <h1>把"看不见的地基"打牢 ①<br><span class="hl">仓库 · 代码组织 · 依赖纪律</span></h1>
+  <p>第一天不写检测、不训模型,而是搭后面所有模块都要踩在上面的地基。这一篇先回答一个被严重低估、却最能拉开工程水平的问题:<strong>代码到底该放进几个仓库、仓库里又该怎么分、谁能依赖谁。</strong></p>
+  <p class="meta">// 三份系列之一:仓库组织　·　② Python 装饰器　·　③ 日志工具　//　可打印留存</p>
+</div></header>
+
+<div class="shell">
+<!-- ══════════ TOC ══════════ -->
+<nav class="toc">
+  <div class="tt">目录 Contents</div>
+  <a href="#s0">0 · 为什么先搭地基</a>
+  <a href="#s1">1 · 三个最容易混的概念</a>
+  <a href="#s2">2 · Monorepo vs Multi-repo</a>
+  <a href="#s3">3 · 为什么本项目选 Monorepo</a>
+  <a href="#s4">4 · ODPlatform 真实目录树</a>
+  <a href="#s5">5 · 依赖纪律:单向、无环</a>
+  <a href="#s6">6 · 留个悬念:它将来会怎么长</a>
+  <a href="#s7">7 · 小结</a>
+</nav>
+
+<!-- ══════════ MAIN ══════════ -->
+<main>
+
+<p class="lead">读这份文档时请带着一个问题:<strong>同样一份代码,为什么有的团队能持续迭代十年,有的三个月就改不动了?</strong> 答案往往不在算法里,而在第一天就定下来的这些"地基"决策里。</p>
+
+<!-- ───────── 0 ───────── -->
+<h2 id="s0"><span class="no">0</span>为什么第一天先搭地基</h2>
+<p>后面几个模块(数据、训练、评估、推理、应用)都会反复用到三样东西:<strong>知道文件在哪(路径)、知道发生了什么(日志)、知道快慢在哪(性能计时)</strong>。如果这些没有统一、可靠的实现,每个人就会各写各的——路径硬编码、用 <code>print</code> 调试、计时代码散落一地。等到集成时,这些"小事"会变成最难拆的雷。</p>
+<p>所以第一天的任务,是把这些<strong>横切关注点(cross-cutting concern)</strong>——和具体业务无关、却到处都要的东西——收口成 <code>common/</code> 层的趁手工具。但在写第一行 <code>common/</code> 代码之前,得先想明白一件更大的事:<strong>这些代码,放进一个什么样的仓库、什么样的目录结构里?</strong> 这就是本篇要回答的。</p>
+<div class="box why"><div class="bt">💡 这一篇和后两篇的关系</div>
+<p>本篇讲<strong>全局结构</strong>(代码放哪、谁依赖谁);第二篇讲 <code>performance_utils.py</code>(用<strong>装饰器</strong>实现);第三篇讲<strong>日志工具</strong>。后两篇造的工具,都住在本篇定下的 <code>common/</code> 这一层里。</p></div>
+
+<!-- ───────── 1 ───────── -->
+<h2 id="s1"><span class="no">1</span>三个最容易混为一谈的概念</h2>
+<p>很多人一听"架构",脑子里浮现的是一张文件夹截图。这是第一个要打破的误解。下面这三件事,是<strong>三个不同层面</strong>的东西,经常被搅在一起:</p>
+
+<figure class="fig"><div class="frame">
+<svg viewBox="0 0 820 280" xmlns="http://www.w3.org/2000/svg">
+  <g font-size="12">
+    <rect x="14" y="40" width="250" height="210" rx="11" fill="#fff" stroke="#0d7d99" stroke-width="1.4"/>
+    <rect x="14" y="40" width="250" height="34" rx="11" fill="rgba(13,125,153,.08)"/>
+    <text x="30" y="62" font-family="Archivo" font-weight="700" font-size="13" fill="#0d7d99">项目组织形式</text>
+    <text x="30" y="96" fill="#54666f" font-size="11">回答:代码放在<tspan font-weight="700" fill="#13242c">几个仓库</tspan>里?</text>
+    <text x="30" y="120" fill="#54666f" font-size="11">· Monorepo(一个仓库)</text>
+    <text x="30" y="140" fill="#54666f" font-size="11">· Multi-repo(多个仓库)</text>
+    <text x="30" y="172" fill="#8497a0" font-size="10.5">层面:仓库 / 物理</text>
+    <rect x="30" y="190" width="218" height="44" rx="7" fill="rgba(13,125,153,.05)" stroke="#cfe3e9"/>
+    <text x="40" y="208" fill="#0b6680" font-size="10">git 仓库的数量与边界</text>
+    <text x="40" y="224" fill="#54666f" font-size="10">怎么 clone、怎么发版</text>
+
+    <rect x="286" y="40" width="250" height="210" rx="11" fill="#fff" stroke="#1f9d63" stroke-width="1.4"/>
+    <rect x="286" y="40" width="250" height="34" rx="11" fill="rgba(31,157,99,.08)"/>
+    <text x="302" y="62" font-family="Archivo" font-weight="700" font-size="13" fill="#1f9d63">代码组织形式</text>
+    <text x="302" y="96" fill="#54666f" font-size="11">回答:仓库内部怎么<tspan font-weight="700" fill="#13242c">分包</tspan>?</text>
+    <text x="302" y="120" fill="#54666f" font-size="11">· 目录树、包与模块</text>
+    <text x="302" y="140" fill="#54666f" font-size="11">· 分层、命名、放哪个文件</text>
+    <text x="302" y="172" fill="#8497a0" font-size="10.5">层面:文件 / 目录</text>
+    <rect x="302" y="190" width="218" height="44" rx="7" fill="rgba(31,157,99,.05)" stroke="#cfe8da"/>
+    <text x="312" y="208" fill="#17794c" font-size="10">common/ apps/ src/ ...</text>
+    <text x="312" y="224" fill="#54666f" font-size="10">看得见、摸得着的目录</text>
+
+    <rect x="558" y="40" width="248" height="210" rx="11" fill="#fff" stroke="#5358d4" stroke-width="1.4"/>
+    <rect x="558" y="40" width="248" height="34" rx="11" fill="rgba(83,88,212,.08)"/>
+    <text x="574" y="62" font-family="Archivo" font-weight="700" font-size="13" fill="#5358d4">架构 Architecture</text>
+    <text x="574" y="96" fill="#54666f" font-size="11">回答:谁<tspan font-weight="700" fill="#13242c">依赖</tspan>谁?边界在哪?</text>
+    <text x="574" y="120" fill="#54666f" font-size="11">· 依赖方向、耦合、边界</text>
+    <text x="574" y="140" fill="#54666f" font-size="11">· 数据怎么流、改动如何隔离</text>
+    <text x="574" y="172" fill="#8497a0" font-size="10.5">层面:逻辑 / 看不见</text>
+    <rect x="574" y="190" width="216" height="44" rx="7" fill="rgba(83,88,212,.05)" stroke="#d3d4f3"/>
+    <text x="584" y="208" fill="#3f44b0" font-size="10">common 被谁依赖、能不能成环</text>
+    <text x="584" y="224" fill="#54666f" font-size="10">画不出来,要靠纪律守</text>
+  </g>
+  <text x="410" y="22" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="13.5" fill="#13242c">目录树长什么样 ≠ 架构是什么</text>
+</svg>
+</div><figcaption><b>图 1</b>　三个层面各自独立:仓库数量(项目组织)、目录结构(代码组织)、依赖关系(架构)。三者可以任意组合——<b>关键洞见:文件夹截图不是架构,依赖关系才是。</b></figcaption></figure>
+
+<div class="box judge"><div class="bt">🧭 工程判断 · 第一天就要建立的认知</div>
+<p>你可以在一个 Monorepo 里把代码写成一团乱麻(目录整齐但到处互相依赖),也可以在 Multi-repo 里保持架构清晰。<strong>仓库形式和架构质量是两条正交的轴。</strong>本课程后面反复强调的"依赖单向、不许成环",约束的是<strong>架构</strong>,跟我们用一个还是多个仓库无关。</p></div>
+
+<!-- ───────── 2 ───────── -->
+<h2 id="s2"><span class="no">2</span>Monorepo vs Multi-repo</h2>
+<p>这是"项目组织形式"层面的核心选择:把整个系统的代码放进<strong>一个</strong>仓库(Monorepo),还是按组件/服务拆成<strong>多个</strong>仓库(Multi-repo)。</p>
+
+<figure class="fig"><div class="frame">
+<svg viewBox="0 0 820 320" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="m1" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L7,4 L0,8 z" fill="#c64b7a"/></marker></defs>
+  <text x="20" y="28" font-family="Archivo" font-weight="800" font-size="13" fill="#0d7d99">Monorepo · 一个仓库装下所有</text>
+  <rect x="20" y="40" width="360" height="248" rx="12" fill="rgba(13,125,153,.04)" stroke="#0d7d99" stroke-width="1.5"/>
+  <text x="38" y="64" font-family="JetBrains Mono" font-size="12" fill="#0b6680" font-weight="700">ODPlatform/  (git ×1)</text>
+  <g font-family="JetBrains Mono" font-size="11" fill="#13242c">
+    <rect x="40" y="78" width="320" height="26" rx="6" fill="#fff" stroke="#cfe3e9"/><text x="52" y="95">├─ common/      路径·日志·性能</text>
+    <rect x="40" y="110" width="320" height="26" rx="6" fill="#fff" stroke="#cfe3e9"/><text x="52" y="127">├─ data_pipeline/  数据流水线·质检</text>
+    <rect x="40" y="142" width="320" height="26" rx="6" fill="#fff" stroke="#cfe3e9"/><text x="52" y="159">├─ training/    训练·评估</text>
+    <rect x="40" y="174" width="320" height="26" rx="6" fill="#fff" stroke="#cfe3e9"/><text x="52" y="191">├─ inference/   推理</text>
+    <rect x="40" y="206" width="320" height="26" rx="6" fill="#fff" stroke="#cfe3e9"/><text x="52" y="223">└─ cli/         命令行入口</text>
+  </g>
+  <rect x="40" y="244" width="320" height="32" rx="7" fill="rgba(31,157,99,.08)" stroke="#bfe3cf"/>
+  <text x="52" y="264" font-family="Noto Sans SC" font-size="11" fill="#17794c">✓ 一次 commit 改多模块 · ✓ CI 一处 · ✓ 共享 common 零成本</text>
+
+  <text x="430" y="28" font-family="Archivo" font-weight="800" font-size="13" fill="#c64b7a">Multi-repo · 每个组件一个仓库</text>
+  <g font-family="JetBrains Mono" font-size="11">
+    <rect x="430" y="46" width="170" height="50" rx="9" fill="#fff" stroke="#c6d4d9"/><text x="444" y="68" fill="#13242c" font-weight="700">common-repo</text><text x="444" y="85" fill="#8497a0" font-size="10">v1.4.0</text>
+    <rect x="620" y="46" width="180" height="50" rx="9" fill="#fff" stroke="#c6d4d9"/><text x="634" y="68" fill="#13242c" font-weight="700">data-repo</text><text x="634" y="85" fill="#8497a0" font-size="10">依赖 common v1.2 ⚠</text>
+    <rect x="430" y="120" width="170" height="50" rx="9" fill="#fff" stroke="#c6d4d9"/><text x="444" y="142" fill="#13242c" font-weight="700">inference-repo</text><text x="444" y="159" fill="#8497a0" font-size="10">依赖 common v1.4</text>
+    <rect x="620" y="120" width="180" height="50" rx="9" fill="#fff" stroke="#c6d4d9"/><text x="634" y="142" fill="#13242c" font-weight="700">app-repo</text><text x="634" y="159" fill="#8497a0" font-size="10">依赖 inference v0.9</text>
+  </g>
+  <line x1="515" y1="120" x2="500" y2="98" stroke="#c64b7a" stroke-width="1.5" marker-end="url(#m1)"/>
+  <line x1="620" y1="78" x2="600" y2="74" stroke="#c64b7a" stroke-width="1.5" marker-end="url(#m1)"/>
+  <line x1="620" y1="145" x2="600" y2="150" stroke="#c64b7a" stroke-width="1.5" marker-end="url(#m1)"/>
+  <rect x="430" y="190" width="370" height="56" rx="9" fill="rgba(198,75,122,.07)" stroke="#eccdd8"/>
+  <text x="448" y="210" font-family="Noto Sans SC" font-size="11" fill="#a8345f" font-weight="700">⚠ 版本对不齐(依赖地狱)</text>
+  <text x="448" y="228" font-family="Noto Sans SC" font-size="10.5" fill="#54666f">data 还在用 common v1.2,inference 已升 v1.4 → 集成时炸</text>
+  <text x="448" y="262" font-family="Noto Sans SC" font-size="10.5" fill="#54666f">✓ 各自独立部署/发版 · ✗ 跨仓库改一个接口要发 N 个仓库</text>
+</svg>
+</div><figcaption><b>图 2</b>　Monorepo 把所有模块放一处,改 <b>common</b> 的接口能一次提交、一次 CI 验证全栈;Multi-repo 各自独立,但跨仓库的接口改动与版本对齐是长期痛点。</figcaption></figure>
+
+<table>
+  <thead><tr><th style="width:130px">维度</th><th>Monorepo(一个仓库)</th><th>Multi-repo(多个仓库)</th></tr></thead>
+  <tbody>
+    <tr><td>跨模块改动</td><td><b>原子提交</b>:一次 commit 同时改 common 和调用方,要么全成功要么全回滚</td><td>要分别提 PR、分别发版、按顺序升级,容易半成品状态</td></tr>
+    <tr><td>共享代码</td><td>直接 import,零成本</td><td>要打包成库、发版、各方升级版本</td></tr>
+    <tr><td>CI / 工具链</td><td>一套配置统管;难点是"只测改动到的部分"</td><td>每个仓库独立,但要维护 N 套</td></tr>
+    <tr><td>重构</td><td>跨模块改名/挪动,IDE 一把梭</td><td>跨仓库重构极痛苦</td></tr>
+    <tr><td>权限 / 部署</td><td>权限粒度粗;通常整体或按目录部署</td><td><b>owner 清晰、可独立部署</b></td></tr>
+    <tr><td>典型采用者</td><td>Google、Meta、字节等大量内部系统</td><td>大量微服务团队、开源生态</td></tr>
+  </tbody>
+</table>
+
+<!-- ───────── 3 ───────── -->
+<h2 id="s3"><span class="no">3</span>ODPlatform 为什么选 Monorepo</h2>
+<p>本项目是<strong>单团队、模块紧耦合的教学/产品级系统</strong>,Monorepo 几乎是唯一合理选择:</p>
+<ul>
+  <li><strong>common 被所有人依赖。</strong>改一次 common 的接口,需要立刻看到它对数据/训练/推理/应用的全部影响。Monorepo 让这件事在<strong>一次提交 + 一次 CI</strong> 里完成验证——不会出现"common 升级了但某个模块忘了跟"的半成品状态。</li>
+  <li><strong>单一真相来源(SSoT)。</strong>路径、配置规范、日志规范只在一处定义,全仓库引用,杜绝漂移。这正是后两篇要造的 <code>paths</code> / 日志工具存在的前提。</li>
+  <li><strong>未来加端,零摩擦。</strong>今天只有训练+推理一个端;哪天想加个网页 demo、桌面壳,Monorepo 让新端直接复用 common,而不必把它打包发版给另一个仓库。</li>
+</ul>
+<div class="box why"><div class="bt">💡 但"一个仓库"绝不等于"松散架构"</div>
+<p>仓库是 Mono,不代表谁都能随便 import 谁。我们用<strong>纪律</strong>(将来由 CI 强制)守住"依赖单向、不许成环"。<strong>仓库形式解决"代码放哪",架构纪律解决"谁能依赖谁"——两者一起上,才有既好协作、又改得动的系统。</strong>这条纪律具体长什么样,见第 5 节。</p></div>
+
+<!-- ───────── 4 ───────── -->
+<h2 id="s4"><span class="no">4</span>ODPlatform 的真实目录树</h2>
+<p>上面三张图为了把"一个仓库装下所有"讲清楚,把目录画得很简(<code>common/ data/ training/...</code> 平铺在根上)。但 ODPlatform <strong>真正</strong>的树,比那个多两层讲究——而这两层,正是被"代码要能被正确 import"和"多端要共享资产"两件事逼出来的。先看全貌:</p>
+
+<figure class="code" data-file="ODPlatform/ (真实目录树)" data-lang="text"><script type="text/plain">
+ODPlatform/                          ← workspace 根
+├── .odp-workspace                   ← 根标记文件:代码"向上查找"定位根(见第二/三篇 paths)
+├── pyproject.toml                   ← 仓库根:只放全仓共享的工具配置(ruff/mypy/pytest)
+│                                       它本身【不是包】,不放业务依赖
+│
+├── apps/                            ← ① 把"可独立交付的端"归类,为未来的端预留
+│   ├── platform/                    ← ★ 今天唯一的端:训练 + 推理引擎
+│   │   ├── pyproject.toml           ←   该端自己的依赖(torch/ultralytics) + 命令入口
+│   │   ├── src/                     ← ② src 布局:强制"以真实安装方式"导入
+│   │   │   └── od_platform/         ←   真正被 import 的包(下划线!)
+│   │   │       ├── common/          ← ★ 公共基础层:本系列三篇要从零填满它
+│   │   │       ├── data_pipeline/   ←   数据转换 + 划分(后续)
+│   │   │       ├── data_validation/ ←   数据质检闸门(后续)
+│   │   │       ├── training/        ←   训练(后续)
+│   │   │       ├── evaluation/      ←   评估(后续)
+│   │   │       ├── inference/       ←   推理(后续)
+│   │   │       └── cli/             ←   入口层:用户敲命令的地方
+│   │   ├── tests/                   ← 端私有:这个端的测试
+│   │   ├── configs/                 ← 端私有:描述"这个端怎么跑"
+│   │   └── logging/                 ← 端私有:这个端自己的运行时日志
+│   ├── web-backend/                 ← 占位:未来的端,今天空着
+│   └── desktop/                     ← 占位:未来的端,今天空着
+│
+├── data/                            ← 全局共享:所有端用同一份数据
+│   ├── raw/                         ←   原始数据:只读,绝不就地改
+│   └── processed/                   ←   派生数据集:含冻结的 train/val/test
+├── models/                          ← 全局共享:所有端用同一份权重
+│   ├── pretrained/                  ←   下载的预训练权重(输入)
+│   └── trained/                     ←   训练产出、长期保留的权重(产物)
+├── runs/                            ← 全局共享:每次训练运行的完整现场
+├── scripts/                         ← 开发期入口(装包前临时桥);装包后退役
+├── tests/                           ← 占位:跨端测试的家,今天空着
+└── docs/                            ← 项目文档:设计 / 架构记录 / 说明
+</script></figure>
+
+<p>这棵树有三类东西,用三种颜色就能讲清它的组织逻辑:</p>
+<figure class="fig"><div class="frame">
+<svg viewBox="0 0 760 210" xmlns="http://www.w3.org/2000/svg">
+  <g font-family="Noto Sans SC">
+    <rect x="20" y="28" width="232" height="158" rx="11" fill="rgba(31,157,99,.05)" stroke="#1f9d63" stroke-width="1.4"/>
+    <rect x="20" y="28" width="232" height="32" rx="11" fill="rgba(31,157,99,.1)"/>
+    <text x="36" y="49" font-family="Archivo" font-weight="700" font-size="12.5" fill="#17794c">🟢 可 import 的代码包</text>
+    <text x="36" y="82" font-size="11" fill="#54666f">od_platform/ 及它的子模块</text>
+    <text x="36" y="104" font-size="11" fill="#54666f">common / training / cli ...</text>
+    <text x="36" y="132" font-size="10.5" fill="#8497a0">放在 src/ 里 →</text>
+    <text x="36" y="150" font-size="10.5" fill="#8497a0">想 import 必须先装包</text>
+    <text x="36" y="172" font-size="10.5" fill="#8497a0">随代码进 git</text>
+
+    <rect x="264" y="28" width="232" height="158" rx="11" fill="rgba(83,88,212,.05)" stroke="#5358d4" stroke-width="1.4"/>
+    <rect x="264" y="28" width="232" height="32" rx="11" fill="rgba(83,88,212,.1)"/>
+    <text x="280" y="49" font-family="Archivo" font-weight="700" font-size="12.5" fill="#3f44b0">🟣 端私有(随端走)</text>
+    <text x="280" y="82" font-size="11" fill="#54666f">configs / logging / tests</text>
+    <text x="280" y="104" font-size="11" fill="#54666f">住在 apps/platform/ 内部</text>
+    <text x="280" y="132" font-size="10.5" fill="#8497a0">每个端各有一份</text>
+    <text x="280" y="150" font-size="10.5" fill="#8497a0">日志是端的运行副产物</text>
+    <text x="280" y="172" font-size="10.5" fill="#8497a0">配置描述"这个端怎么跑"</text>
+
+    <rect x="508" y="28" width="232" height="158" rx="11" fill="rgba(184,125,24,.06)" stroke="#b87d18" stroke-width="1.4"/>
+    <rect x="508" y="28" width="232" height="32" rx="11" fill="rgba(184,125,24,.12)"/>
+    <text x="524" y="49" font-family="Archivo" font-weight="700" font-size="12.5" fill="#8a5e12">🟠 全局共享(顶层)</text>
+    <text x="524" y="82" font-size="11" fill="#54666f">data / models / runs / docs</text>
+    <text x="524" y="104" font-size="11" fill="#54666f">提到仓库顶层</text>
+    <text x="524" y="132" font-size="10.5" fill="#8497a0">所有端指向同一份</text>
+    <text x="524" y="150" font-size="10.5" fill="#8497a0">物理上只存一份</text>
+    <text x="524" y="172" font-size="10.5" fill="#8497a0">大文件不进 git</text>
+  </g>
+</svg>
+</div><figcaption><b>图 3</b>　同一棵树换个看法:<b>绿=可被 import 的代码包,紫=端私有(随端走),橙=全局共享(顶层)</b>。一样东西放在哪一层,等于在声明"它被谁共享"。</figcaption></figure>
+
+<p>三层各自的道理,一句话各说清:</p>
+<ul>
+  <li><strong><code>apps/</code> 这一层(端的家)。</strong>把"可独立交付的端"归在一起。今天只有 <code>platform</code> 一个孩子,看着多余;但等 <code>web-backend</code>、<code>desktop</code> 到来,它们只是 <code>apps/</code> 下<strong>新增的同级目录</strong>,引擎一行代码都不用动。这不是过度设计——我们没为不存在的需求多写一行功能代码,只是把"东西放哪"提前想对了,成本是多敲一个文件夹名。</li>
+  <li><strong><code>src/</code> 这一层(一道闸)。</strong>把源码塞进 <code>src/</code>,意味着你想 <code>import od_platform</code> 就<strong>必须先把它装成包</strong>(<code>pip install -e</code>);否则 Python 会"碰巧"import 到那份没装的源码,造成"本地能跑、一上 CI 就崩"的经典坑。<code>src/</code> 不是繁琐,是强制本地与线上行为对齐的闸门。</li>
+  <li><strong>共享上提、私有下沉。</strong><code>data/models/runs</code> 是所有端都要用同一份的东西(数据集动辄上 GB,复制多份既浪费又会不同步)→ 提到顶层。<code>logging/configs/tests</code> 是某个端自己的东西 → 留在端内部,谁的归谁。</li>
+</ul>
+<div class="box biz"><div class="bt">🏢 一个容易混的命名点</div>
+<p>包名 <code>od_platform</code> 用<strong>下划线</strong>——因为它要被 <code>import</code>,而 <code>import od-platform</code> 会被当成"od 减 platform",是语法错误。对外的<strong>安装名</strong>则是连字符的 <code>od-platform</code>(即 <code>pip install od-platform</code>)。两个名字指同一个东西,只是分属"导入层"和"安装层",各遵各的规矩。</p></div>
+<p>这棵树完整的"为什么每一行都长这样",是设计课(D0)一个问题一个问题推出来的;本篇只需你记住<strong>结果与三层逻辑</strong>,后两篇造工具时会反复踩在它上面。</p>
+
+<!-- ───────── 5 ───────── -->
+<h2 id="s5"><span class="no">5</span>依赖纪律:单向、无环(不是"只能向下")</h2>
+<p>目录解决"东西放哪",还剩最隐蔽、最要命的一个问题:<strong>谁能依赖谁?</strong></p>
+<p>项目做大一点,你会有好几个业务模块:数据处理、训练、评估、推理。写着写着它们开始<strong>互相 import</strong>:推理为图省事直接 <code>from training import ...</code> 借个函数,评估又反过来用了推理里的东西……一开始都能跑。然后某天你改了训练里一个函数签名——推理报错;你去修推理——评估又报错。模块之间织成一张网,碰任何一根线整张网都跟着抖。这种项目的特征是:<strong>"能跑",但"不能动"。</strong></p>
+
+<div class="box trap"><div class="bt">⚠ 一个常见的讲法误区</div>
+<p>很多教程会说"依赖<strong>只能向下</strong>、严格分层"。这话<strong>不够准</strong>。真实里"评估"本就要调用"推理"去跑出预测,这是一条正当依赖,禁掉它你只能把推理硬塞进 common(撑胖底座)或重复实现一遍。所以要守的纪律不是"互不依赖",而是更准的一条——</p></div>
+
+<p><strong>依赖只能单向流动,不许成环(acyclic)。</strong>评估依赖推理可以,只要推理不反过来依赖评估;你要禁的是<strong>环</strong>,不是所有平级的边。把"无环"守住,那张网就被拆成一棵<strong>有向无环的树</strong>:动一根枝子,不会牵动那些不依赖它的枝子。</p>
+
+<figure class="fig"><div class="frame">
+<svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="dn" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto"><path d="M0,0 L7,4 L0,8 z" fill="#5358d4"/></marker>
+    <marker id="ok" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto"><path d="M0,0 L7,4 L0,8 z" fill="#1f9d63"/></marker>
+    <marker id="no" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto"><path d="M0,0 L7,4 L0,8 z" fill="#c64b7a"/></marker>
+  </defs>
+  <!-- cli 顶层 -->
+  <rect x="280" y="18" width="200" height="40" rx="9" fill="rgba(13,125,153,.06)" stroke="#0d7d99" stroke-width="1.4"/>
+  <text x="380" y="38" text-anchor="middle" font-family="Archivo" font-weight="700" font-size="12" fill="#0b6680">cli 入口层</text>
+  <text x="380" y="51" text-anchor="middle" font-family="Noto Sans SC" font-size="9.5" fill="#54666f">没人依赖它 → 改它最安全</text>
+
+  <!-- 业务子系统平级 -->
+  <text x="40" y="98" font-family="Noto Sans SC" font-size="10.5" fill="#8497a0">业务子系统(平级,允许互相依赖,只要不成环)</text>
+  <g font-family="JetBrains Mono" font-size="11">
+    <rect x="40" y="108" width="150" height="44" rx="9" fill="#fff" stroke="#5358d4" stroke-width="1.3"/><text x="115" y="135" text-anchor="middle" fill="#3f44b0" font-weight="700">data_pipeline</text>
+    <rect x="210" y="108" width="120" height="44" rx="9" fill="#fff" stroke="#5358d4" stroke-width="1.3"/><text x="270" y="135" text-anchor="middle" fill="#3f44b0" font-weight="700">training</text>
+    <rect x="430" y="108" width="120" height="44" rx="9" fill="#fff" stroke="#5358d4" stroke-width="1.3"/><text x="490" y="135" text-anchor="middle" fill="#3f44b0" font-weight="700">evaluation</text>
+    <rect x="600" y="108" width="120" height="44" rx="9" fill="#fff" stroke="#5358d4" stroke-width="1.3"/><text x="660" y="135" text-anchor="middle" fill="#3f44b0" font-weight="700">inference</text>
+  </g>
+  <!-- 允许:评估→推理 -->
+  <line x1="490" y1="152" x2="600" y2="152" stroke="#1f9d63" stroke-width="1.8" marker-end="url(#ok)"/>
+  <text x="545" y="170" text-anchor="middle" font-family="Noto Sans SC" font-size="9.5" fill="#17794c">✓ 允许:评估调用推理(单向)</text>
+  <!-- 禁止:推理→评估 反向成环 -->
+  <line x1="600" y1="190" x2="500" y2="190" stroke="#c64b7a" stroke-width="1.6" stroke-dasharray="4 3" marker-end="url(#no)"/>
+  <text x="545" y="207" text-anchor="middle" font-family="Noto Sans SC" font-size="9.5" fill="#a8345f">✗ 禁止:反过来依赖 = 成环</text>
+
+  <!-- common 基础层 -->
+  <rect x="40" y="232" width="680" height="46" rx="10" fill="rgba(184,125,24,.07)" stroke="#b87d18" stroke-width="1.5"/>
+  <text x="380" y="252" text-anchor="middle" font-family="Archivo" font-weight="700" font-size="12" fill="#8a5e12">common 基础层 — 路径 · 日志 · 字符串 · 系统 · 性能</text>
+  <text x="380" y="269" text-anchor="middle" font-family="Noto Sans SC" font-size="10" fill="#54666f">所有业务模块都只【向下】依赖它;它谁也不依赖 → 必须最先、最稳</text>
+
+  <!-- 向下的依赖箭头 -->
+  <line x1="380" y1="58" x2="380" y2="106" stroke="#5358d4" stroke-width="1.6" marker-end="url(#dn)"/>
+  <line x1="115" y1="152" x2="115" y2="230" stroke="#b87d18" stroke-width="1.4" marker-end="url(#dn)" opacity=".7"/>
+  <line x1="270" y1="152" x2="270" y2="230" stroke="#b87d18" stroke-width="1.4" marker-end="url(#dn)" opacity=".7"/>
+  <line x1="660" y1="152" x2="660" y2="230" stroke="#b87d18" stroke-width="1.4" marker-end="url(#dn)" opacity=".7"/>
+  <text x="395" y="92" font-family="Noto Sans SC" font-size="9.5" fill="#5358d4">cli 依赖下面的服务</text>
+</svg>
+</div><figcaption><b>图 4</b>　依赖只能单向流动、不许成环(acyclic)。<b>common 在最底层被所有人依赖</b>(所以第一天先造它);业务模块平级、允许互相依赖(评估→推理),但<b>不许反向成环</b>;<code>cli</code> 在最上层、没人依赖它,所以改入口最安全。这<b>不是</b>"严格分层向下"——平级的边是允许的。</figcaption></figure>
+
+<div class="box judge"><div class="bt">🧭 工程判断 · 为什么这条纪律在今天格外重要</div>
+<p>你会<strong>非常频繁地改动</strong>这个项目——加功能、重构、替换实现,很多时候还交给 AI 去做。一个无法被安全改动的项目,在代码近乎免费的时代是一种<strong>负资产</strong>:你越想快速迭代,它崩得越频繁。把"无环"守住,就是让"改一处不波及无关的地方"成为可能。这条线画不进目录里,只能靠每段代码的评审守住。</p></div>
+
+<!-- ───────── 6 ───────── -->
+<h2 id="s6"><span class="no">6</span>留个悬念:这套结构将来会怎么长 🚀</h2>
+<p>到这里,你已经拿到了一套"够用且讲得通"的仓库结构。但教学不能一次把所有牌摊给你——下面这几个问题,我们今天<strong>故意不解决</strong>,留给你先想、留给后面的课去答。能把它们想清楚,你对"结构"的理解就从"会用"升到了"会判断"。</p>
+<div class="box why"><div class="bt">🤔 留给你的几个开放问题</div>
+<p><strong>① Monorepo 到什么规模该拆成 Multi-repo?</strong><br>我们这个阶段选 Monorepo,但它不是万能的。仓库到几百万行、团队到上百人、各端发布周期严重打架时,Monorepo 的代价(CI 变慢、权限太粗)会盖过它的好处。<em>那个临界点在哪、用什么信号判断该拆了?</em></p>
+<p><strong>② 多端真上线,"共享"的还共享得了吗?</strong><br>今天 <code>platform</code> 和未来的 <code>web-backend</code> 共享顶层 <code>data/</code>、<code>models/</code>,靠的是"同一台机器上的文件路径"。可真实企业里,对外推理的后端几乎一定在<strong>另一台</strong>机器/容器/集群上,它拿不到你训练机本地的 <code>models/trained/best.pt</code>。<em>那它怎么拿到训练产物?</em>(提示方向:Monorepo 解决的是<strong>代码</strong>复用,<strong>产物</strong>分发是另一层——对象存储 / 模型仓库 / 数据版本化。)</p>
+<p><strong>③ "依赖不许成环"这条纪律,靠人盯得住吗?</strong><br>评审能抓一时,但人会累、会漏。<em>怎么让"成环"在它被引入的那一刻就被自动拦下来?</em>(提示方向:把这条规则交给 CI 流水线去强制,让一次违规的提交直接红掉。)</p>
+<p>这三个问题都没有标准答案要你现在背;它们是路标,告诉你"今天学的这套,边界在哪、下一站往哪走"。</p></div>
+
+<!-- ───────── 7 ───────── -->
+<h2 id="s7"><span class="no">7</span>小结</h2>
+<p>这一篇没写一行检测代码,但你已经拿到几条能用一辈子的判断:</p>
+<ul>
+  <li><strong>三个层面别混。</strong>仓库数量(项目组织)、目录结构(代码组织)、依赖关系(架构)是三件事;<strong>目录树不是架构,依赖关系才是。</strong></li>
+  <li><strong>仓库形式 ⊥ 架构质量。</strong>Monorepo 让单团队协作和 SSoT 最省力,但架构纪律要靠评审/CI 单独守,跟用几个仓库无关。</li>
+  <li><strong>结构是被逼出来的,不是套模板。</strong><code>apps/</code> 是为"未来的端"留的家,<code>src/</code> 是强制"装了才能 import"的闸,共享上提/私有下沉是按"被谁共享"分层——每一层都有它要解决的具体问题。</li>
+  <li><strong>依赖单向、无环。</strong>不是"只能向下、严格分层";平级模块允许互相依赖,禁的是<strong>环</strong>。common 在最底、被所有人依赖,所以第一天先造它。</li>
+</ul>
+<div class="box judge"><div class="bt">🧭 通往下一篇</div>
+<p>地基的"地图"画好了。下一篇我们就钻进 <code>common/</code> 这一层,造第一个工具 <code>performance_utils.py</code>——而它的实现核心,是一个没接触过会觉得像魔法、拆开看却毫不神秘的语言点:<strong>Python 装饰器</strong>。</p></div>
+
+</main>
+</div>
+
+<footer>
+  ODPlatform · 基础设施教学(第一天 · 之一)　//　仓库 · 代码组织 · 依赖纪律　//　可打印留存
+</footer>
+<!-- highlight.js(在线时高亮;离线则原样显示,代码照常可读) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+  // 把每个 <figure class="code"> 里的原始代码安全注入为高亮代码块。
+  // 用 textContent 写入,浏览器自动转义 < & 等,无需手动转义。
+  document.querySelectorAll('figure.code').forEach(function(fig){
+    var raw = fig.querySelector('script[type="text/plain"]').textContent.replace(/^\n/, '').replace(/\s+$/, '');
+    var fname = fig.getAttribute('data-file') || '';
+    var lang = fig.getAttribute('data-lang') || 'python';
+    // 头部条
+    var head = document.createElement('div');
+    head.className = 'chead';
+    head.innerHTML = '<span class="dots"><i style="background:#e0524b"></i><i style="background:#e3b341"></i><i style="background:#3fb950"></i></span>'
+                   + '<span class="fname">' + fname + '</span><span class="lang">' + lang + '</span>';
+    // 代码体
+    var pre = document.createElement('pre');
+    var code = document.createElement('code');
+    code.className = 'language-' + lang;
+    code.textContent = raw;            // ← 关键:自动转义,代码原样
+    pre.appendChild(code);
+    fig.innerHTML = '';
+    fig.appendChild(head);
+    fig.appendChild(pre);
+    if (window.hljs) { try { hljs.highlightElement(code); } catch(e){} }
+  });
+</script>
+</body>
+</html>

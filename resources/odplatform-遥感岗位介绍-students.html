@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>基于 ODPlatform 的遥感目标检测智能开发平台 · 岗位介绍(给同学)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f3f6f7; --bg-2:#e9f0f1; --panel:#ffffff; --panel-2:#eff5f6;
+    --line:#dce6ea; --line-2:#c6d4d9;
+    --ink:#13242c; --ink-soft:#2b3f48; --dim:#54666f; --faint:#8497a0;
+    --cyan:#0d7d99;   /* 数据 */
+    --green:#1f9d63;  /* 算法 */
+    --amber:#b87d18;  /* 架构 / 可复用 */
+    --violet:#5358d4; /* 推理 */
+    --rose:#c64b7a;   /* 应用 */
+    --disp:'Archivo','Noto Sans SC',sans-serif;
+    --body:'Noto Sans SC',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink-soft);font-family:var(--body);line-height:1.78;font-weight:400;
+    -webkit-font-smoothing:antialiased;
+    background-image:linear-gradient(rgba(13,125,153,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(13,125,153,.035) 1px,transparent 1px);
+    background-size:46px 46px;}
+  ::selection{background:#bfe6ef;color:#06323d}
+  h1,h2,h3,h4{font-family:var(--disp);font-weight:700;line-height:1.2;letter-spacing:-.01em;color:var(--ink)}
+  .mono{font-family:var(--mono)}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 30px}
+
+  .toolbar{position:fixed;top:18px;right:18px;z-index:200}
+  .toolbar button{font-family:var(--disp);font-weight:600;font-size:.82rem;padding:9px 17px;border-radius:9px;
+    border:1px solid var(--cyan);background:var(--cyan);color:#fff;cursor:pointer;transition:.2s;box-shadow:0 6px 18px rgba(13,125,153,.22)}
+  .toolbar button:hover{transform:translateY(-1px)}
+
+  .tag{font-family:var(--mono);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);font-weight:500}
+  .tag.g{color:var(--green)}.tag.a{color:var(--amber)}.tag.v{color:var(--violet)}.tag.r{color:var(--rose)}
+
+  section{padding:64px 0;position:relative}
+  .sec-head{margin-bottom:38px;max-width:840px}
+  .sec-head .tag{display:block;margin-bottom:13px}
+  .sec-head h2{font-size:clamp(1.7rem,3.6vw,2.45rem);margin-bottom:15px}
+  .sec-head p{color:var(--dim);font-size:1.05rem}
+  .rule{height:1px;background:var(--line)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:28px;
+    box-shadow:0 1px 2px rgba(19,36,44,.03),0 8px 24px rgba(19,36,44,.04)}
+
+  .cover{padding:74px 0 56px;position:relative;overflow:hidden}
+  .cover-glow{position:absolute;top:-20%;right:-10%;width:560px;height:560px;background:radial-gradient(circle,rgba(83,88,212,.09),transparent 64%);filter:blur(20px);pointer-events:none}
+  .cover .wrap{position:relative;z-index:2}
+  .cover-badge{display:inline-flex;align-items:center;gap:9px;padding:7px 15px;border:1px solid var(--line-2);border-radius:30px;background:#fff;font-family:var(--mono);font-size:.73rem;color:var(--dim);margin-bottom:24px;box-shadow:0 2px 8px rgba(19,36,44,.04)}
+  .cover-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--violet);box-shadow:0 0 0 3px rgba(83,88,212,.18)}
+  .cover h1{font-family:var(--body);font-weight:900;font-size:clamp(2rem,5vw,3.4rem);letter-spacing:-.02em;line-height:1.16;margin-bottom:20px}
+  .cover h1 .g{color:var(--cyan)}
+  .cover .lead{font-size:clamp(1.04rem,1.9vw,1.24rem);color:var(--dim);max-width:760px;margin-bottom:14px;font-weight:400}
+  .cover .lead b{color:var(--ink);font-weight:500}
+  .cover .meta{font-family:var(--mono);font-size:.82rem;color:var(--cyan);margin-top:22px}
+
+  .relay-hero{margin-top:34px;border:1px solid var(--line-2);border-radius:16px;background:#fff;padding:14px 14px 6px;
+    box-shadow:0 2px 4px rgba(19,36,44,.04),0 18px 50px rgba(19,36,44,.07);overflow-x:auto}
+  .relay-hero svg{display:block;width:100%;min-width:680px;height:auto}
+
+  .callout{border-left:3px solid var(--amber);background:rgba(184,125,24,.07);padding:18px 22px;border-radius:0 11px 11px 0;margin:22px 0}
+  .callout.green{border-color:var(--green);background:rgba(31,157,99,.07)}
+  .callout.cyan{border-color:var(--cyan);background:rgba(13,125,153,.07)}
+  .callout.violet{border-color:var(--violet);background:rgba(83,88,212,.07)}
+  .callout .h{font-family:var(--disp);font-weight:700;color:var(--ink);margin-bottom:6px;font-size:.98rem}
+  .callout p{color:var(--dim);font-size:.92rem;margin:0}
+  .callout p b{color:var(--ink)}
+  .bg-alt{background:var(--bg-2)}
+
+  .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:820px){.grid2{grid-template-columns:1fr}.grid3{grid-template-columns:1fr}}
+
+  /* —— 岗位卡 —— */
+  .role-card{border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:24px;background:var(--panel);
+    box-shadow:0 1px 2px rgba(19,36,44,.03),0 10px 26px rgba(19,36,44,.05)}
+  .role-top{padding:24px 28px;border-bottom:1px solid var(--line);position:relative}
+  .role-no{position:absolute;top:18px;right:24px;font-family:var(--disp);font-weight:800;font-size:2.5rem;opacity:.16}
+  .role-name{font-family:var(--disp);font-weight:800;font-size:1.45rem;color:var(--ink);margin-bottom:5px}
+  .role-en{font-family:var(--mono);font-size:.8rem;color:var(--faint);margin-bottom:12px}
+  .role-alias{display:flex;flex-wrap:wrap;gap:7px}
+  .role-alias .a{font-family:var(--mono);font-size:.7rem;padding:3px 9px;border-radius:6px;background:var(--panel-2);border:1px solid var(--line);color:var(--dim)}
+  .role-body{padding:24px 28px}
+  .role-body .blk{margin-bottom:20px}
+  .role-body .blk:last-child{margin-bottom:0}
+  .role-body h4{font-size:.76rem;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;margin-bottom:11px;color:var(--faint)}
+  .role-body p{font-size:.93rem;color:var(--dim);margin-bottom:10px}
+  .role-body p b{color:var(--ink)}
+  .role-body ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+  .role-body li{font-size:.9rem;color:var(--dim);padding-left:20px;position:relative}
+  .role-body li::before{content:'▸';position:absolute;left:0;color:var(--cyan)}
+  .own{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.74rem;padding:5px 11px;border-radius:7px;margin:4px 6px 4px 0;border:1px solid;background:#fff}
+  .skill{font-family:var(--mono);font-size:.72rem;padding:3px 9px;border-radius:6px;background:var(--panel-2);border:1px solid var(--line);color:var(--dim);margin:3px 5px 3px 0;display:inline-block}
+  .ho{display:grid;grid-template-columns:1fr;gap:8px;margin-top:4px}
+  .ho .row{font-size:.88rem;color:var(--dim);background:var(--panel-2);border-radius:9px;padding:11px 14px;border:1px solid var(--line)}
+  .ho .row b{color:var(--ink)}
+  .watch{background:rgba(184,125,24,.08);border:1px solid rgba(184,125,24,.28);border-radius:9px;padding:12px 15px;font-size:.88rem;color:var(--dim)}
+  .watch b{color:var(--amber)}
+
+  footer{border-top:1px solid var(--line);background:#fff;padding:46px 0 34px;text-align:center}
+
+  @media print{
+    @page{size:A4;margin:13mm 11mm}
+    body{background:#fff!important;background-image:none!important}
+    .toolbar,.cover-glow{display:none!important}
+    .card,.role-card,.relay-hero{box-shadow:none!important;page-break-inside:avoid;break-inside:avoid}
+    section{padding:16px 0!important}
+    .bg-alt{background:#fff!important}
+    .pgbreak{page-break-before:always}
+    *{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar"><button onclick="window.print()">⤓ 打印 / 存 PDF</button></div>
+
+<!-- ===================== COVER ===================== -->
+<header class="cover">
+  <div class="cover-glow"></div>
+  <div class="wrap">
+    <div class="cover-badge"><span class="dot"></span> 岗位介绍 · 找到你在团队里的位置</div>
+    <h1>在这个团队里,<br><span class="g">你是谁?</span></h1>
+    <p class="lead">这个项目不是"每人写一个文件夹,最后拼起来"。它是一个<b>像真实公司一样运作的团队</b>——每个人扮演一个真实存在的工程岗位,负责自己那一摊,在交接处和队友配合。</p>
+    <p class="lead">这份文档帮你搞清楚三件事:<b>团队里有哪几个岗位、你这个岗位具体干什么、你要和谁交接什么</b>。找到你的位置,然后把它做好。</p>
+    <p class="meta">// 5 个真实岗位 · 看清你负责什么 · 看清你和谁协作</p>
+
+    <!-- 招牌:四棒接力 + 架构师托底 -->
+    <div class="relay-hero" role="img" aria-label="团队接力图:数据→算法→推理→应用 四棒,架构师在底层托底">
+      <svg viewBox="0 0 880 196" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+        <defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="#8497a0"/></marker></defs>
+        <text x="20" y="26" fill="#8497a0" font-size="11" letter-spacing="2">项目推进方向 →</text>
+
+        <!-- 四棒节点 -->
+        <g>
+          <rect x="20" y="44" width="180" height="60" rx="11" fill="rgba(13,125,153,.05)" stroke="#0d7d99" stroke-width="1.5"/>
+          <text x="110" y="72" fill="#0d7d99" font-size="14" text-anchor="middle" font-weight="700">数据工程师</text>
+          <text x="110" y="91" fill="#54666f" font-size="10" text-anchor="middle">整理 + 校验数据</text>
+
+          <rect x="240" y="44" width="180" height="60" rx="11" fill="rgba(31,157,99,.05)" stroke="#1f9d63" stroke-width="1.5"/>
+          <text x="330" y="72" fill="#1f9d63" font-size="14" text-anchor="middle" font-weight="700">算法工程师</text>
+          <text x="330" y="91" fill="#54666f" font-size="10" text-anchor="middle">训练 + 评估</text>
+
+          <rect x="460" y="44" width="180" height="60" rx="11" fill="rgba(83,88,212,.06)" stroke="#5358d4" stroke-width="1.5"/>
+          <text x="550" y="72" fill="#5358d4" font-size="14" text-anchor="middle" font-weight="700">推理工程师 ★</text>
+          <text x="550" y="91" fill="#54666f" font-size="10" text-anchor="middle">实时服务 + 提速</text>
+
+          <rect x="680" y="44" width="180" height="60" rx="11" fill="rgba(198,75,122,.06)" stroke="#c64b7a" stroke-width="1.5"/>
+          <text x="770" y="72" fill="#c64b7a" font-size="14" text-anchor="middle" font-weight="700">应用工程师</text>
+          <text x="770" y="91" fill="#54666f" font-size="10" text-anchor="middle">桌面端 + 可视化</text>
+        </g>
+        <!-- 交接箭头 + 产物 -->
+        <g>
+          <line x1="200" y1="74" x2="238" y2="74" stroke="#8497a0" stroke-width="1.8" marker-end="url(#ah)"/>
+          <text x="219" y="66" fill="#8497a0" font-size="8.5" text-anchor="middle">干净数据</text>
+          <line x1="420" y1="74" x2="458" y2="74" stroke="#8497a0" stroke-width="1.8" marker-end="url(#ah)"/>
+          <text x="439" y="66" fill="#8497a0" font-size="8.5" text-anchor="middle">best.pt</text>
+          <line x1="640" y1="74" x2="678" y2="74" stroke="#8497a0" stroke-width="1.8" marker-end="url(#ah)"/>
+          <text x="659" y="66" fill="#8497a0" font-size="8.5" text-anchor="middle">推理引擎</text>
+        </g>
+        <!-- 架构师托底 -->
+        <rect x="20" y="124" width="840" height="44" rx="11" fill="rgba(184,125,24,.07)" stroke="#b87d18" stroke-opacity=".5"/>
+        <text x="440" y="151" fill="#b87d18" font-size="11.5" text-anchor="middle" font-weight="700">架构师 / Tech Lead —— 搭骨架 · 维护公共工具(common)· review 代码,撑着上面所有人</text>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<div class="wrap"><div class="rule"></div></div>
+
+<!-- ===================== HOW IT WORKS ===================== -->
+<section id="intro">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="tag">开始之前 / 先理解一件事</span>
+      <h2>你扮演的,是一个真实的工程岗位</h2>
+      <p>在真实的科技公司里,做一个 AI 检测系统,从来不是一个人干完所有事,而是<b style="color:var(--ink)">不同岗位的人各管一块</b>:有人专门管数据,有人专门训模型,有人专门让模型跑得快,有人专门做界面。我们这个项目,就是把这套真实的分工,搬到你们团队里。</p>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="tag" style="margin-bottom:12px">关于"岗位"</div>
+        <p style="color:var(--dim);font-size:.93rem">下面五个岗位,<b style="color:var(--ink)">每一个都是招聘网站上真在招的职位</b>。你在这个项目里扮演哪个,就相当于提前体验了那份工作。做完之后,你简历上能写的不再是"会用 Python",而是"担任过 XX 工程师"。</p>
+      </div>
+      <div class="card">
+        <div class="tag a" style="margin-bottom:12px">关于"一人多岗"</div>
+        <p style="color:var(--dim);font-size:.93rem">如果你们组人不够 5 个,很正常——<b style="color:var(--ink)">一个人身兼两个岗位</b>就行,真实的小公司也是这样。重点是:五个职能都得有人扛起来,别漏掉任何一块。</p>
+      </div>
+    </div>
+
+    <div class="callout cyan">
+      <div class="h">📌 岗位 和 "模块" 是什么关系?</div>
+      <p>简单说:<b>模块是"代码怎么分",岗位是"人怎么分工"</b>。一个岗位通常负责 1–2 个相关的模块(因为它们本来就是一类活),另外大家还会一起维护一个公共工具层(common)。你不用记哪个模块归哪个文件夹,只要记住"我这个岗位,负责把这几件事做好"。</p>
+    </div>
+
+    <div class="callout violet">
+      <div class="h">🧭 重要:这五个岗位,不绑定"遥感"这份数据</div>
+      <p>我们这次的练兵场是<b>遥感目标检测</b>,但这套岗位分工<b>跟具体数据无关</b>——平台和数据集本就是解耦的。换成工业质检、安防、无人机巡检……<b>还是这五个人、这条接力链</b>,变的只是喂进去的数据。你在这里练到的是"平台工程能力 + 团队协作",这份本事走到哪个检测领域都通用。</p>
+    </div>
+  </div>
+</section>
+
+<div class="wrap pgbreak"><div class="rule"></div></div>
+
+<!-- ===================== ROLE CARDS ===================== -->
+<section id="roles" class="bg-alt">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="tag v">五个岗位 / 看看哪个是你</span>
+      <h2>团队里的五个人</h2>
+      <p>读下面五张卡片,看看哪个最适合你、或者你被分到了哪个。每张卡片都告诉你:<b style="color:var(--ink)">这个岗位干什么、你具体负责哪几块、你和谁交接、要注意什么</b>。</p>
+    </div>
+
+    <!-- ROLE 1 -->
+    <div class="role-card">
+      <div class="role-top" style="background:linear-gradient(135deg,rgba(13,125,153,.08),transparent)">
+        <div class="role-no" style="color:var(--cyan)">01</div>
+        <div class="role-name">数据工程师</div>
+        <div class="role-en">Data Engineer</div>
+        <div class="role-alias"><span class="a">数据工程师</span><span class="a">数据质量</span><span class="a">Data Engineer</span></div>
+      </div>
+      <div class="role-body">
+        <div class="blk">
+          <h4>你是干什么的</h4>
+          <p>你是整个团队的<b>"数据守门人"</b>。模型再厉害,数据是脏的也白搭。你负责把原始数据整理干净、转成标准格式,并在训练前把所有数据质量问题揪出来。一句话:<b>数据靠不靠谱,你说了算</b>。</p>
+        </div>
+        <div class="blk">
+          <h4>你具体负责这几块</h4>
+          <div>
+            <span class="own" style="border-color:var(--cyan);color:var(--cyan)">数据流水线</span>
+            <span class="own" style="border-color:var(--cyan);color:var(--cyan)">数据验证</span>
+            <span class="own" style="border-color:var(--faint);color:var(--faint)">和大家共管 common</span>
+          </div>
+          <ul style="margin-top:12px">
+            <li>把原始标注数据转成 YOLO 格式,切分训练/验证集</li>
+            <li>生成数据配置清单(data.yaml)</li>
+            <li>写质检:检查图片标注配对、坐标合法、类别正确</li>
+            <li>出一份清晰的数据质量报告</li>
+          </ul>
+        </div>
+        <div class="blk">
+          <h4>你和谁交接</h4>
+          <div class="ho">
+            <div class="row"><b>↓ 你交给算法工程师:</b>通过质检的、标准格式的数据集 + data.yaml。他拿到才能开始训练。</div>
+          </div>
+        </div>
+        <div class="watch"><b>⚠ 注意:</b>你在整条链的最上游,你慢了大家都得等。所以<b style="color:var(--amber)">尽早交出一个能用的小数据集</b>,让队友先动起来,别等全部完美了才交。</div>
+        <div class="blk" style="margin-top:18px"><h4>你会练到的技能</h4><div><span class="skill">Python</span><span class="skill">数据格式处理</span><span class="skill">数据校验</span><span class="skill">OpenCV</span></div></div>
+      </div>
+    </div>
+
+    <!-- ROLE 2 -->
+    <div class="role-card">
+      <div class="role-top" style="background:linear-gradient(135deg,rgba(31,157,99,.08),transparent)">
+        <div class="role-no" style="color:var(--green)">02</div>
+        <div class="role-name">算法工程师</div>
+        <div class="role-en">ML / Algorithm Engineer</div>
+        <div class="role-alias"><span class="a">算法工程师</span><span class="a">ML Engineer</span><span class="a">CV 算法</span></div>
+      </div>
+      <div class="role-body">
+        <div class="blk">
+          <h4>你是干什么的</h4>
+          <p>你是<b>"模型的炼丹师"</b>。整个项目的"智能"从你这来。你负责训练模型、调参数、做评估,用客观数字证明这个模型到底行不行。一句话:<b>模型效果好不好,你负责</b>。</p>
+        </div>
+        <div class="blk">
+          <h4>你具体负责这几块</h4>
+          <div>
+            <span class="own" style="border-color:var(--green);color:var(--green)">训练</span>
+            <span class="own" style="border-color:var(--green);color:var(--green)">评估</span>
+            <span class="own" style="border-color:var(--cyan);color:var(--cyan)">运行配置(你主要的调参阵地)</span>
+          </div>
+          <ul style="margin-top:12px">
+            <li>组织训练流程,支持断点续训</li>
+            <li>调超参数(都在配置文件里,不动代码)</li>
+            <li>训练完归档最好的权重(best.pt)+ 记录实验</li>
+            <li>算 mAP、精确率、召回率,评估模型好坏</li>
+          </ul>
+        </div>
+        <div class="blk">
+          <h4>你和谁交接</h4>
+          <div class="ho">
+            <div class="row"><b>↑ 你等数据工程师:</b>他给你干净的数据集,你才能开训。</div>
+            <div class="row"><b>↓ 你交给推理工程师:</b>训练好、评估达标的 best.pt 权重 + 类别信息。</div>
+          </div>
+        </div>
+        <div class="watch"><b>⚠ 注意:</b>交模型给推理工程师时,<b style="color:var(--amber)">一定要把"你训练时怎么预处理图片的"讲清楚</b>(图片缩放、归一化等)。不然他那边推理结果会对不上,两人会互相找半天 bug。</div>
+        <div class="blk" style="margin-top:18px"><h4>你会练到的技能</h4><div><span class="skill">PyTorch</span><span class="skill">YOLO 原理</span><span class="skill">超参调优</span><span class="skill">指标评估</span></div></div>
+      </div>
+    </div>
+
+    <!-- ROLE 3 -->
+    <div class="role-card" style="border-color:rgba(83,88,212,.4)">
+      <div class="role-top" style="background:linear-gradient(135deg,rgba(83,88,212,.09),transparent)">
+        <div class="role-no" style="color:var(--violet)">03</div>
+        <div class="role-name">推理工程师</div>
+        <div class="role-en">MLOps / Inference Engineer · 全项目最硬核</div>
+        <div class="role-alias"><span class="a">推理工程师</span><span class="a">MLOps Engineer</span><span class="a">模型部署</span><span class="a">后端</span></div>
+      </div>
+      <div class="role-body">
+        <div class="blk">
+          <h4>你是干什么的</h4>
+          <p>你是<b>"让模型真正跑起来的人"</b>。算法工程师训出的模型,在他电脑里只是个文件;是你把它变成一个能<b>实时、高速、稳定</b>运行的服务。这是全项目技术含量最高的部分——也是最酷的。一句话:<b>模型跑得快不快、稳不稳,你负责</b>。</p>
+        </div>
+        <div class="blk">
+          <h4>你具体负责这几块</h4>
+          <div>
+            <span class="own" style="border-color:var(--violet);color:var(--violet)">推理(多线程流水线)</span>
+            <span class="own" style="border-color:var(--amber);color:var(--amber)">帧源 frame_source</span>
+            <span class="own" style="border-color:var(--faint);color:var(--faint)">共管 common(性能/日志)</span>
+          </div>
+          <ul style="margin-top:12px">
+            <li>搭四级多线程流水线(读帧→推理→画框→输出)</li>
+            <li>做性能优化,把帧率从卡顿拉到 60+ FPS</li>
+            <li>设计稳定的接口,让界面能接进来</li>
+            <li>处理摄像头/视频/网络流等各种输入源</li>
+          </ul>
+        </div>
+        <div class="blk">
+          <h4>你和谁交接</h4>
+          <div class="ho">
+            <div class="row"><b>↑ 你等算法工程师:</b>他给你 best.pt 权重,你装进流水线。</div>
+            <div class="row"><b>↓ 你交给应用工程师:</b>一个能调用的推理引擎(InferService)。</div>
+          </div>
+        </div>
+        <div class="watch"><b>⚠ 注意:</b>你的输出接口,应用工程师的界面要靠它。<b style="color:var(--amber)">接口先和他约定好、尽量别随便改</b>——你一改,他界面就崩,会很影响进度。</div>
+        <div class="blk" style="margin-top:18px"><h4>你会练到的技能</h4><div><span class="skill">多线程/并发</span><span class="skill">性能优化</span><span class="skill">服务化设计</span><span class="skill">OpenCV</span></div></div>
+      </div>
+    </div>
+
+    <!-- ROLE 4 -->
+    <div class="role-card">
+      <div class="role-top" style="background:linear-gradient(135deg,rgba(198,75,122,.08),transparent)">
+        <div class="role-no" style="color:var(--rose)">04</div>
+        <div class="role-name">应用工程师</div>
+        <div class="role-en">Application / Frontend Engineer · 做出能看见的东西</div>
+        <div class="role-alias"><span class="a">应用工程师</span><span class="a">前端/客户端</span><span class="a">软件开发</span></div>
+      </div>
+      <div class="role-body">
+        <div class="blk">
+          <h4>你是干什么的</h4>
+          <p>你是<b>"把引擎变成产品的人"</b>。前面几个岗位做的都是"看不见的内核",而你做的是用户真正能<b>打开、能看、能点</b>的界面。检测结果好不好看、用起来顺不顺,全看你。一句话:<b>最终的体验,你负责</b>。</p>
+        </div>
+        <div class="blk">
+          <h4>你具体负责这几块</h4>
+          <div>
+            <span class="own" style="border-color:var(--rose);color:var(--rose)">可视化(画框画标签)</span>
+            <span class="own" style="border-color:var(--rose);color:var(--rose)">桌面端界面</span>
+            <span class="own" style="border-color:var(--amber);color:var(--amber)">使用帧源模块</span>
+          </div>
+          <ul style="margin-top:12px">
+            <li>把检测结果画成漂亮的框 + 中英文标签</li>
+            <li>做桌面端窗口,显示实时检测画面</li>
+            <li>把推理引擎接到界面上,处理实时数据流</li>
+            <li>做交互细节(实时显示、暂停、状态反馈)</li>
+          </ul>
+        </div>
+        <div class="blk">
+          <h4>你和谁交接</h4>
+          <div class="ho">
+            <div class="row"><b>↑ 你等推理工程师:</b>他给你一个能调用的推理引擎,你把它接到界面。</div>
+          </div>
+        </div>
+        <div class="watch"><b>⚠ 注意:</b>你的界面依赖推理工程师的接口。<b style="color:var(--amber)">早点和他确认接口长什么样</b>,这样他改内部优化时不影响你,你俩能各干各的、互不卡。</div>
+        <div class="blk" style="margin-top:18px"><h4>你会练到的技能</h4><div><span class="skill">PyQt/GUI</span><span class="skill">可视化</span><span class="skill">OpenCV 绘制</span><span class="skill">界面交互</span></div></div>
+      </div>
+    </div>
+
+    <!-- ROLE 5 -->
+    <div class="role-card" style="border-color:rgba(184,125,24,.45)">
+      <div class="role-top" style="background:linear-gradient(135deg,rgba(184,125,24,.1),transparent)">
+        <div class="role-no" style="color:var(--amber)">05</div>
+        <div class="role-name">架构师 / 技术负责人</div>
+        <div class="role-en">Architect / Tech Lead · 把大家焊成一个系统的人</div>
+        <div class="role-alias"><span class="a">架构师</span><span class="a">Tech Lead</span><span class="a">技术负责人</span><span class="a">兼项目统筹</span></div>
+      </div>
+      <div class="role-body">
+        <div class="blk">
+          <h4>你是干什么的</h4>
+          <p>你不属于某一个模块,你<b>管的是"整体"</b>。其他四个人各做各的,谁来保证他们能拼到一起、不互相打架?是你。你定整个项目的结构、维护大家共用的工具、做 code review、当协作冲突的"裁判"。一句话:<b>整个系统能不能协同运转,你负责</b>。</p>
+        </div>
+        <div class="blk">
+          <h4>你具体负责这几块</h4>
+          <div>
+            <span class="own" style="border-color:var(--amber);color:var(--amber)">公共工具层 common(你主导)</span>
+            <span class="own" style="border-color:var(--amber);color:var(--amber)">整体架构</span>
+            <span class="own" style="border-color:var(--amber);color:var(--amber)">代码规范 & review</span>
+          </div>
+          <ul style="margin-top:12px">
+            <li>搭好项目骨架(目录结构、模块怎么分)</li>
+            <li>维护 common:路径、日志、结果封装等公共工具</li>
+            <li>统一代码规范,review 大家的代码</li>
+            <li>当各岗位接口对不上时,拍板决定怎么改</li>
+            <li>(通常还兼)推进进度、统筹答辩</li>
+          </ul>
+        </div>
+        <div class="blk">
+          <h4>你和谁协作</h4>
+          <div class="ho">
+            <div class="row"><b>↔ 你和所有人:</b>你定的公共工具和项目结构,是其他四个岗位协作的"地基"。你是把团队焊成一个整体的人。</div>
+          </div>
+        </div>
+        <div class="watch"><b>⚠ 注意:</b>common 是大家都在用的,<b style="color:var(--amber)">谁要改 common 都得先经过你</b>。否则一个人随手一改,可能让其他三个人的代码全报错。你是公共代码的守门人。</div>
+        <div class="blk" style="margin-top:18px"><h4>你会练到的技能</h4><div><span class="skill">系统设计</span><span class="skill">Git 工作流</span><span class="skill">Code Review</span><span class="skill">项目协调</span></div></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="wrap pgbreak"><div class="rule"></div></div>
+
+<!-- ===================== TEAM AT A GLANCE ===================== -->
+<section id="team">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="tag">怎么分工 / 看你们组几个人</span>
+      <h2>你们组几个人?这样分</h2>
+      <p>五个岗位,但你们可能没那么多人。下面给三种情况的分法。<b style="color:var(--ink)">核心原则:五个职能都得有人扛,人不够就一人兼两个。</b></p>
+    </div>
+
+    <div class="grid3">
+      <div class="card">
+        <div class="tag" style="margin-bottom:14px">4 个人</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:11px;font-size:.88rem;color:var(--dim)">
+          <li><b style="color:var(--cyan)">① 数据工程师</b></li>
+          <li><b style="color:var(--green)">② 算法工程师</b></li>
+          <li><b style="color:var(--violet)">③ 推理工程师</b></li>
+          <li><b style="color:var(--rose)">④ 应用工程师</b><br><span style="color:var(--faint)">+ 兼架构/统筹</span></li>
+        </ul>
+        <p style="font-size:.82rem;color:var(--faint);margin-top:14px">架构这一摊,由组里最懂全局的人兼着。</p>
+      </div>
+      <div class="card" style="border-color:var(--green)">
+        <div class="tag g" style="margin-bottom:14px">5 个人 ★ 最理想</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:11px;font-size:.88rem;color:var(--dim)">
+          <li><b style="color:var(--cyan)">① 数据工程师</b></li>
+          <li><b style="color:var(--green)">② 算法工程师</b></li>
+          <li><b style="color:var(--violet)">③ 推理工程师</b></li>
+          <li><b style="color:var(--rose)">④ 应用工程师</b></li>
+          <li><b style="color:var(--amber)">⑤ 架构师 / Lead</b></li>
+        </ul>
+        <p style="font-size:.82rem;color:var(--faint);margin-top:14px">一人一岗,职责最清楚。</p>
+      </div>
+      <div class="card">
+        <div class="tag a" style="margin-bottom:14px">6 个人</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:11px;font-size:.88rem;color:var(--dim)">
+          <li><b style="color:var(--cyan)">① 数据工程师</b></li>
+          <li><b style="color:var(--green)">② 算法工程师</b></li>
+          <li><b style="color:var(--violet)">③ 推理工程师 A</b><br><span style="color:var(--faint)">流水线核心</span></li>
+          <li><b style="color:var(--violet)">④ 推理工程师 B</b><br><span style="color:var(--faint)">帧源 + 性能</span></li>
+          <li><b style="color:var(--rose)">⑤ 应用工程师</b></li>
+          <li><b style="color:var(--amber)">⑥ 架构师 / Lead</b></li>
+        </ul>
+        <p style="font-size:.82rem;color:var(--faint);margin-top:14px">推理最难,人多就拆两个人做。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap"><div class="rule"></div></div>
+
+<!-- ===================== HOW YOU CONNECT ===================== -->
+<section id="connect" class="bg-alt">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="tag v">你们怎么配合 / 一场接力</span>
+      <h2>记住这条线:谁交给谁什么</h2>
+      <p>你们五个不是各干各的,而是一条<b style="color:var(--ink)">接力链</b>。每个人把自己的"产出"交给下一个人。看懂这条线,你就知道自己卡住会影响谁、自己在等谁。</p>
+    </div>
+
+    <div class="grid3" style="gap:14px">
+      <div class="card" style="border-left:3px solid var(--cyan)">
+        <div class="tag" style="margin-bottom:10px">数据 → 算法</div>
+        <p style="color:var(--dim);font-size:.9rem;margin:0">数据工程师交出<b style="color:var(--ink)">通过质检的标准数据集 + data.yaml</b>。算法工程师拿到它才能开训。</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--green)">
+        <div class="tag g" style="margin-bottom:10px">算法 → 推理</div>
+        <p style="color:var(--dim);font-size:.9rem;margin:0">算法工程师交出<b style="color:var(--ink)">达标的 best.pt + 类别信息 + 预处理口径</b>。推理工程师装进流水线。</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--violet)">
+        <div class="tag v" style="margin-bottom:10px">推理 → 应用</div>
+        <p style="color:var(--dim);font-size:.9rem;margin:0">推理工程师交出<b style="color:var(--ink)">一个能调用的推理引擎(稳定接口)</b>。应用工程师接到界面上。</p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:18px;border-color:var(--amber)">
+      <div class="h">🏗 架构师:不在接力棒上,在接力棒下面</div>
+      <p>四棒往右传,架构师在底层托着所有人——<b>搭骨架、维护 common、统一规范、review 代码、当接口对不上时拍板</b>。没有他,四个人各写各的,迟早拼不到一起。</p>
+    </div>
+
+    <div class="callout green" style="margin-top:14px">
+      <div class="h">🤝 配合的两条小建议(很有用)</div>
+      <p><b>① 先约定接口,再各自开工。</b>动手前,相邻两个岗位先碰一下:"我交给你的东西长什么样?"约定好了再写,能省下大量返工。<br><b>② 早点拼到一起。</b>别等各自全做完才合并——第一周就用假数据/小模型把整条链路打通,后面再慢慢替换成真的。这样集成时不会手忙脚乱。</p>
+    </div>
+  </div>
+</section>
+
+<div class="wrap"><div class="rule"></div></div>
+
+<!-- ===================== CLOSING ===================== -->
+<section id="closing">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="tag a">最后 / 给你打个气</span>
+      <h2>把你这一棒,跑好</h2>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h3 style="font-size:1.08rem;margin-bottom:10px">你的岗位,就是你的招牌</h3>
+        <p style="color:var(--dim);font-size:.92rem">做完这个项目,你能在简历和面试里说:"我在一个 5 人团队里担任 XX 工程师,负责……,和队友在……上做了协作。" 这种具体的、有岗位有协作的经历,正是招聘方最想看到的。</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:1.08rem;margin-bottom:10px">遇到摩擦?太正常了</h3>
+        <p style="color:var(--dim);font-size:.92rem">真实团队里,接口对不上、互相等、为某个设计吵起来——天天发生。你们要是也遇到了,别气馁,这说明你们正在体验真实的工程协作。<b style="color:var(--ink)">解决这些摩擦的过程,才是你真正学到的东西。</b></p>
+      </div>
+    </div>
+
+    <div class="callout cyan">
+      <div class="h">✅ 现在,你可以开始了</div>
+      <p>看完这份,你应该已经知道:团队有哪五个岗位、你是哪个、你负责什么、要和谁交接什么。剩下的,就是和队友一起,把这个项目从零搭起来。一棒接一棒,把它跑完。加油!</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p style="font-family:var(--disp);font-weight:800;font-size:1.2rem;color:var(--ink);margin-bottom:10px">找到你的位置,跑好你这一棒</p>
+    <p style="color:var(--dim);font-size:.92rem;max-width:620px;margin:0 auto">数据工程师 · 算法工程师 · 推理工程师 · 应用工程师 · 架构师 —— 五个人,一个系统。换什么数据都是这套班子。</p>
+    <div class="rule" style="margin:24px 0"></div>
+    <p style="color:var(--faint);font-size:.78rem;font-family:var(--mono)">岗位介绍 · 给同学 &nbsp;//&nbsp; 看清你负责什么,看清你和谁协作</p>
+  </div>
+</footer>
+
+</body>
+</html>

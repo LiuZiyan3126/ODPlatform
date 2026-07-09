@@ -57,9 +57,21 @@ data/processed/
 # 模型权重不进 git
 models/pretrained/*.pt
 models/trained/*.pt
+models/trained/*.engine
+models/trained/*.onnx
 models/trained/*/
 !models/pretrained/README.md
 !models/trained/README.md
+
+# 测试目录中的模型文件
+**/tests/**/*.pt
+**/tests/**/*.engine
+**/tests/**/*.onnx
+
+# 视频测试数据
+*.mp4
+*.avi
+*.mov
 
 # 训练运行结果(每次自动产生新目录)
 runs/*

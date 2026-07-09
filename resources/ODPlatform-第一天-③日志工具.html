@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ODPlatform · 基础设施第一天 —— 仓库组织 / 装饰器 / 日志工具</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+<style>
+  :root{
+    --bg:#f4f7f8; --bg-2:#e9f0f1; --panel:#fff; --panel-2:#eff5f6;
+    --line:#dce6ea; --line-2:#c6d4d9;
+    --ink:#13242c; --ink-soft:#273a43; --dim:#54666f; --faint:#8497a0;
+    --cyan:#0d7d99; --green:#1f9d63; --amber:#b87d18; --violet:#5358d4; --rose:#c64b7a;
+    --code-bg:#f7f9fa; --code-line:#e4ebee;
+    --disp:'Archivo','Noto Sans SC',sans-serif;
+    --body:'Noto Sans SC',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink-soft);font-family:var(--body);line-height:1.8;font-weight:400;-webkit-font-smoothing:antialiased;font-size:15.5px}
+  ::selection{background:#bfe6ef;color:#06323d}
+  h1,h2,h3,h4{font-family:var(--disp);color:var(--ink);line-height:1.25;letter-spacing:-.01em}
+  a{color:var(--cyan);text-decoration:none}
+  code{font-family:var(--mono);font-size:.86em;background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--cyan)}
+  strong{color:var(--ink);font-weight:700}
+
+  /* —— 封面 —— */
+  .cover{background:linear-gradient(160deg,#0f2a33,#13343f 60%,#0d4250);color:#eaf3f5;padding:54px 0 44px;position:relative;overflow:hidden}
+  .cover:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:42px 42px;opacity:.6}
+  .cover-in{max-width:1180px;margin:0 auto;padding:0 40px;position:relative}
+  .crumb{font-family:var(--mono);font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:#6fd6ee}
+  .cover h1{font-family:var(--body);font-weight:900;font-size:clamp(1.9rem,4.4vw,2.9rem);letter-spacing:-.02em;margin:14px 0 12px;color:#fff;line-height:1.18}
+  .cover h1 .hl{color:#54d6f0}
+  .cover p{color:#bcd6dd;font-size:1.06rem;max-width:760px}
+  .cover .meta{font-family:var(--mono);font-size:.8rem;color:#7fd4e8;margin-top:18px}
+
+  .shell{max-width:1180px;margin:0 auto;padding:0 40px;display:grid;grid-template-columns:230px 1fr;gap:44px;align-items:start}
+  nav.toc{position:sticky;top:20px;align-self:start;font-size:13px;border-right:1px solid var(--line);padding:26px 16px 26px 0;max-height:calc(100vh - 40px);overflow:auto}
+  nav.toc .tt{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin:0 0 12px}
+  nav.toc a{display:block;color:var(--dim);padding:5px 0 5px 12px;border-left:2px solid transparent;line-height:1.4}
+  nav.toc a:hover{color:var(--cyan);border-left-color:var(--cyan)}
+  nav.toc a.sub{padding-left:24px;font-size:12px;color:var(--faint)}
+  main{padding:34px 0 90px;min-width:0;max-width:840px}
+
+  h2{font-size:1.7rem;margin:56px 0 6px;padding-top:24px;border-top:2px solid var(--line);scroll-margin-top:16px}
+  h2 .no{font-family:var(--mono);font-size:1rem;color:var(--cyan);font-weight:700;margin-right:12px}
+  h3{font-size:1.22rem;color:var(--ink);margin:34px 0 8px;scroll-margin-top:16px}
+  h4{font-size:1rem;font-weight:700;margin:20px 0 6px}
+  p{margin:11px 0}
+  .lead{font-size:1.05rem;color:var(--dim)}
+  ul,ol{margin:11px 0;padding-left:24px}
+  li{margin:6px 0}
+  li::marker{color:var(--cyan)}
+
+  /* —— 提示框 —— */
+  .box{border-left:3px solid var(--cyan);background:rgba(13,125,153,.06);padding:15px 18px;border-radius:0 10px 10px 0;margin:18px 0;font-size:.95rem}
+  .box .bt{font-family:var(--disp);font-weight:700;color:var(--ink);font-size:.95rem;margin-bottom:5px;display:flex;align-items:center;gap:7px}
+  .box.why{border-color:var(--cyan);background:rgba(13,125,153,.06)} .box.why .bt{color:#0b6680}
+  .box.biz{border-color:var(--green);background:rgba(31,157,99,.06)} .box.biz .bt{color:#17794c}
+  .box.trap{border-color:var(--amber);background:rgba(184,125,24,.08)} .box.trap .bt{color:#8a5e12}
+  .box.judge{border-color:var(--violet);background:rgba(83,88,212,.06)} .box.judge .bt{color:#3f44b0}
+  .box p{margin:6px 0}
+  .box p:first-of-type{margin-top:0}
+
+  /* —— 表格 —— */
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.6px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 2px rgba(19,36,44,.04)}
+  th,td{border:1px solid var(--line);padding:10px 13px;vertical-align:top;text-align:left}
+  thead th{background:#13343f;color:#eaf3f5;font-weight:600;font-size:12.8px}
+  tbody tr:nth-child(even){background:var(--panel-2)}
+  td b{color:var(--ink)}
+
+  /* —— 图 —— */
+  figure.fig{margin:24px 0;border:1px solid var(--line-2);border-radius:13px;background:#fff;overflow:hidden;box-shadow:0 2px 4px rgba(19,36,44,.04),0 14px 36px rgba(19,36,44,.05)}
+  figure.fig .frame{padding:22px 18px 8px;background:linear-gradient(180deg,#fbfdfd,#f4f9fa);overflow-x:auto}
+  figure.fig svg{display:block;width:100%;min-width:520px;height:auto;font-family:var(--mono)}
+  figure.fig figcaption{font-size:12.8px;color:var(--dim);padding:10px 18px;border-top:1px solid var(--line);background:var(--panel-2)}
+  figure.fig figcaption b{color:var(--cyan)}
+
+  /* —— 代码块 —— */
+  figure.code{margin:20px 0;border:1px solid var(--line-2);border-radius:12px;overflow:hidden;background:var(--code-bg);box-shadow:0 2px 4px rgba(19,36,44,.04)}
+  figure.code .chead{display:flex;align-items:center;gap:10px;padding:9px 15px;background:var(--panel-2);border-bottom:1px solid var(--line)}
+  figure.code .dots{display:flex;gap:6px}
+  figure.code .dots i{width:10px;height:10px;border-radius:50%;display:block}
+  figure.code .fname{font-family:var(--mono);font-size:.78rem;color:var(--ink-soft);font-weight:500}
+  figure.code .lang{margin-left:auto;font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  figure.code pre{margin:0;padding:16px 18px;overflow-x:auto}
+  figure.code code{font-family:var(--mono);font-size:12.6px;line-height:1.65;background:none;border:none;padding:0;color:#1c2b33;white-space:pre}
+  .hljs{background:transparent!important;padding:0!important}
+
+  hr.soft{border:0;border-top:1px solid var(--line);margin:30px 0}
+  footer{border-top:1px solid var(--line);background:#fff;padding:36px 0;text-align:center;color:var(--faint);font-size:12.5px;font-family:var(--mono)}
+
+  @media (max-width:1040px){
+    .shell{grid-template-columns:1fr;gap:0}
+    nav.toc{display:none}
+  }
+  @media print{
+    @page{size:A4;margin:13mm 11mm}
+    .cover{background:#13343f!important}
+    nav.toc{display:none}
+    .shell{grid-template-columns:1fr}
+    figure.fig,figure.code,table{box-shadow:none!important;page-break-inside:avoid;break-inside:avoid}
+    h2{page-break-after:avoid}
+    *{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════ COVER ══════════ -->
+<header class="cover"><div class="cover-in">
+  <div class="crumb">教学文档 · ODPlatform 基础设施第一天 · 之三 / 三</div>
+  <h1>把"看不见的地基"打牢 ③<br><span class="hl">日志工具 与 企业级日志实践</span></h1>
+  <p>地基里第二个要造的工具是日志。这块"特别难"的不是 API,而是<strong>判断力</strong>:什么时候记、记到什么级别、记去哪、怎么不重复、怎么不拖慢系统。这一篇把判断力和项目里真正的 <code style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.2);color:#bfeefa">logging_utils.py</code> 一起讲透。</p>
+  <p class="meta">// 三份系列:① 仓库组织　·　② Python 装饰器　·　③ 日志工具(本篇)　//　代码与 D1 实战一致</p>
+</div></header>
+
+<div class="shell">
+<!-- ══════════ TOC ══════════ -->
+<nav class="toc">
+  <div class="tt">目录 Contents</div>
+  <a href="#s0">0 · 日志难在判断力</a>
+  <a href="#s1">1 · 为什么不能用 print</a>
+  <a href="#s2">2 · logging 四个核心概念</a>
+  <a href="#s3">3 · 企业里日志怎么用</a>
+  <a href="#s4">4 · 本项目的日志设计</a>
+  <a href="#s5">5 · 完整代码 + 导读</a>
+  <a href="#s6">6 · 在项目里怎么用</a>
+  <a href="#s7">7 · 头号坑:重复打印</a>
+  <a href="#s8">8 · 留个悬念:做成生产级</a>
+  <a href="#s9">9 · 小结</a>
+</nav>
+
+<!-- ══════════ MAIN ══════════ -->
+<main>
+
+<p class="lead">日志 API 很简单,十分钟能学会。但<strong>日志是产品的一部分</strong>——它要在半夜出故障、你不在现场时,替你还原"当时到底发生了什么"。所以真正难的不是 API,是那几条"什么该记、记到哪"的判断。这一篇先把判断力立起来,再落到项目代码。</p>
+
+<!-- ───────── 0 ───────── -->
+<h2 id="s0"><span class="no">0</span>为什么日志难的不是 API,是判断力</h2>
+<p>上一篇我们造了 <code>time_it</code>,它最后一行是 <code>log.info("性能报告: ...")</code>——计时报告得有个地方"打出来"。这个"地方",绝不该是裸 <code>print</code>。本篇就来造那个统一的日志工具,并搞清它背后的设计。读完你会明白:为什么所有业务模块顶部都写 <code>logger = logging.getLogger(__name__)</code>,以及这行字背后藏着的一整套约定。</p>
+
+<!-- ───────── 1 ───────── -->
+<h2 id="s1"><span class="no">1</span>为什么不能用 print() 调试</h2>
+<table>
+  <thead><tr><th style="width:180px">能力</th><th><code>print()</code></th><th><code>logging</code></th></tr></thead>
+  <tbody>
+    <tr><td>分级别</td><td>✗ 全都一样,无法区分调试信息和严重错误</td><td>✓ DEBUG/INFO/WARNING/ERROR/CRITICAL</td></tr>
+    <tr><td>时间 / 模块 / 行号</td><td>✗ 要自己手拼</td><td>✓ 格式器自动带上</td></tr>
+    <tr><td>同时进文件和控制台</td><td>✗ 做不到</td><td>✓ 多 Handler 各走各的</td></tr>
+    <tr><td>生产环境关闭</td><td>✗ 要逐行删/注释</td><td>✓ 调一下级别即可</td></tr>
+    <tr><td>看出"哪个模块"打的</td><td>✗ 无来源</td><td>✓ logger 名自动带上(<code>%(name)s</code>)</td></tr>
+    <tr><td>被采集系统收走</td><td>✗ 无结构</td><td>✓ 可结构化被 ELK/Loki 采集</td></tr>
+  </tbody>
+</table>
+<div class="box trap"><div class="bt">⚠ 一句话</div>
+<p><code>print</code> 是"给自己看一眼就删"的;<strong>日志是产品的一部分</strong>。一个用 <code>print</code> 调试的项目,等于在故障现场什么证据都没留。</p></div>
+
+<!-- ───────── 2 ───────── -->
+<h2 id="s2"><span class="no">2</span>logging 的四个核心概念</h2>
+<p>标准库 <code>logging</code> 把日志拆成四个角色,理解它们,就理解了所有日志框架:</p>
+<ul>
+  <li><strong>Logger(记录器)</strong>:你代码里调用的入口(<code>logger.info(...)</code>)。它有<strong>层级</strong>——用 <code>getLogger(__name__)</code> 会得到像 <code>od_platform.cli.init_project</code> 这样的树状名字。</li>
+  <li><strong>Handler(处理器)</strong>:决定日志<strong>去哪</strong>——控制台(<code>StreamHandler</code>)、文件(<code>FileHandler</code>)……一个 Logger 可挂多个 Handler。</li>
+  <li><strong>Formatter(格式器)</strong>:决定每条<strong>长什么样</strong>(时间、级别、模块、行号、消息)。</li>
+  <li><strong>Level(级别)</strong>:<code>DEBUG &lt; INFO &lt; WARNING &lt; ERROR &lt; CRITICAL</code>。Logger 和 Handler 各有一道级别闸门,低于阈值的直接被丢弃。</li>
+</ul>
+
+<figure class="fig"><div class="frame">
+<svg viewBox="0 0 760 270" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="lg" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto"><path d="M0,0 L7,4 L0,8 z" fill="#0d7d99"/></marker></defs>
+  <g font-family="JetBrains Mono" font-size="11">
+    <rect x="20" y="110" width="150" height="50" rx="9" fill="#fff" stroke="#0d7d99" stroke-width="1.4"/>
+    <text x="95" y="131" text-anchor="middle" font-weight="700" fill="#0b6680">logger.info("...")</text>
+    <text x="95" y="148" text-anchor="middle" font-size="9.5" fill="#8497a0">你的代码</text>
+
+    <rect x="210" y="105" width="150" height="60" rx="9" fill="rgba(13,125,153,.05)" stroke="#0d7d99"/>
+    <text x="285" y="128" text-anchor="middle" font-weight="700" fill="#0b6680">Logger</text>
+    <text x="285" y="145" text-anchor="middle" font-size="9.5" fill="#54666f">级别闸门 + 冒泡到上层</text>
+
+    <rect x="430" y="62" width="300" height="50" rx="9" fill="#fff" stroke="#1f9d63"/>
+    <text x="448" y="84" font-weight="700" fill="#17794c" font-size="11">Console Handler</text>
+    <text x="448" y="100" font-size="9.5" fill="#8497a0">→ 彩色 Formatter → 终端</text>
+
+    <rect x="430" y="128" width="300" height="50" rx="9" fill="#fff" stroke="#5358d4"/>
+    <text x="448" y="150" font-weight="700" fill="#3f44b0" font-size="11">File Handler</text>
+    <text x="448" y="166" font-size="9.5" fill="#8497a0">→ 详细 Formatter → xxx.log</text>
+  </g>
+  <line x1="170" y1="135" x2="208" y2="135" stroke="#0d7d99" stroke-width="1.8" marker-end="url(#lg)"/>
+  <line x1="360" y1="132" x2="428" y2="87" stroke="#0d7d99" stroke-width="1.5" marker-end="url(#lg)"/>
+  <line x1="360" y1="138" x2="428" y2="153" stroke="#0d7d99" stroke-width="1.5" marker-end="url(#lg)"/>
+  <text x="375" y="222" text-anchor="middle" font-family="Noto Sans SC" font-size="11" fill="#54666f">一条日志 → 经 Logger 级别过滤 → 分发给多个 Handler → 各自按自己的级别和格式输出到不同去向。</text>
+  <text x="375" y="244" text-anchor="middle" font-family="Noto Sans SC" font-size="10.5" fill="#8497a0">同一条日志能【同时】以不同详细程度落到终端和文件。</text>
+</svg>
+</div><figcaption><b>图 1</b>　logging 的数据流:一次 <code>logger.info()</code> 会被分发给挂在 Logger(及其上层)上的<b>每一个 Handler</b>,每个 Handler 有自己的级别闸门与格式器,因此同一条日志能<b>同时</b>以不同详细程度落到终端(彩色简洁)和文件(完整带行号)。</figcaption></figure>
+
+<!-- ───────── 3 ───────── -->
+<h2 id="s3"><span class="no">3</span>企业里日志到底怎么用</h2>
+<h4>① 级别要有纪律(最重要)</h4>
+<table>
+  <thead><tr><th style="width:110px">级别</th><th>什么时候用</th><th>本平台里的例子</th></tr></thead>
+  <tbody>
+    <tr><td><b style="color:#54666f">DEBUG</b></td><td>开发排查用的细节,生产默认不输出到控制台</td><td>每张图的尺寸、每个框的坐标</td></tr>
+    <tr><td><b style="color:#0d7d99">INFO</b></td><td>关键流程节点,"系统正常地走到了这一步"</td><td>"成功创建目录 data/raw""训练 epoch 12/100"</td></tr>
+    <tr><td><b style="color:#b87d18">WARNING</b></td><td>不正常但能继续,值得关注</td><td>"原始数据集根目录为空,请放入数据集"</td></tr>
+    <tr><td><b style="color:#c64b7a">ERROR</b></td><td>某个功能失败了,但程序还能活</td><td>"创建目录失败,本次初始化中止"</td></tr>
+    <tr><td><b style="color:#a8345f">CRITICAL</b></td><td>系统级、要立刻有人处理</td><td>"找不到 workspace 标记,路径系统失效"</td></tr>
+  </tbody>
+</table>
+
+<h4>② 文件怎么管理:两种常见策略</h4>
+<p>日志总要落到文件里。<strong>什么时候切一个新文件</strong>,有两种主流做法,适用场景不同:</p>
+<table>
+  <thead><tr><th style="width:160px">策略</th><th>怎么切</th><th>适合谁</th></tr></thead>
+  <tbody>
+    <tr><td><b>按运行切分</b><br>(本平台采用)</td><td>每次跑程序,生成一个带<b>时间戳</b>的新文件,如 <code>init-project_20260512-103000.log</code></td><td>训练 / 离线推理 / CLI 这类有明确"一次运行"边界的——想回看"那一次跑"的日志,按文件名一找就到</td></tr>
+    <tr><td><b>按大小滚动</b></td><td>写满单个文件(如 5MB)就自动滚动,只保留最近几份(<code>RotatingFileHandler</code>)</td><td>7×24 长跑的在线服务——没有"一次运行"的概念,只能靠限制大小防止撑爆磁盘</td></tr>
+  </tbody>
+</table>
+<p>我们这门课造的是训练+离线推理引擎,有清晰的"一次运行"边界,所以选<strong>按运行切分</strong>。"按大小滚动"留到第 8 节悬念里再聊。</p>
+
+<h4>③ 其余几条铁律</h4>
+<ul>
+  <li><strong>配置只做一次(SSoT)。</strong>日志的格式/去向/级别在<strong>一处</strong>集中配置,绝不各模块各配各的——否则同一条日志会被打好几遍(见第 7 节)。</li>
+  <li><strong>绝不记敏感信息。</strong>密码、token、密钥永远不进日志。</li>
+  <li><strong>热路径别狂打。</strong>推理每帧都打 INFO 会拖垮性能;用 DEBUG,且让格式延迟求值(<code>logger.debug("box=%s", box)</code> 而不是 f-string 拼大对象)。</li>
+  <li><strong>异常用 <code>logger.exception()</code> 或 <code>exc_info=True</code>。</strong>它会自动把完整 traceback 一起记下来(项目里 <code>time_it</code> 的兜底 warning 就用了 <code>exc_info=True</code>)。</li>
+</ul>
+
+<!-- ───────── 4 ───────── -->
+<h2 id="s4"><span class="no">4</span>ODPlatform 的日志设计:业务"发声",基础设施"配音响"</h2>
+<p>把上面那些实践固化成代码,ODPlatform 用了一个特别清爽的设计。它的精髓是<strong>一句分工</strong>:</p>
+<div class="box why"><div class="bt">💡 金句</div>
+<p><strong>"业务模块要做的事是【发声】,不是【配置音响】。把'怎么配 handler'留给基础设施,业务模块只关心'我要说什么'。"</strong></p></div>
+<p>这句话拆成三个角色,正好对应三种代码:</p>
+<ul>
+  <li><strong>业务模块</strong>(paths / system_utils / init_project / 未来的 train…):顶部只写一行 <code>logger = logging.getLogger(__name__)</code>,然后 <code>logger.info("...")</code> 发声。<strong>它不配 handler,也不知道 handler 长什么样。</strong></li>
+  <li><strong>基础设施模块</strong>(<code>logging_utils.py</code>):提供一个 <code>get_logger()</code> 函数,把 console + file 两个 handler 挂到<strong>根 logger <code>"od_platform"</code></strong> 上。</li>
+  <li><strong>CLI 入口</strong>(<code>init_project</code> 函数最开头):<strong>调用一次</strong> <code>get_logger()</code> 把 handler 装好——之后整个进程里所有 <code>getLogger(__name__)</code> 拿到的子 logger,都会通过<strong>冒泡机制</strong>走到根 logger,由它的 handler 统一处理。</li>
+</ul>
+<p>这里有两个关键机制要讲清:</p>
+<p><strong>(1) <code>getLogger(__name__)</code> 形成一棵 logger 树。</strong><code>__name__</code> 在每个模块里会自动展开成该模块的点号全路径,例如 <code>od_platform.cli.init_project</code>。这些名字天然构成一棵以 <code>od_platform</code> 为根的树。</p>
+<p><strong>(2) 冒泡机制(propagate)。</strong>一条日志从子 logger 一路<strong>冒泡</strong>到祖先 logger,任何一层挂了 handler,就会被那个 handler 处理。所以我们只要在根 <code>"od_platform"</code> 上挂一次 handler,全树的日志都能被它接住——这就是"业务模块不必各配各的"的原理。</p>
+
+<figure class="fig"><div class="frame">
+<svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="bb" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto"><path d="M0,0 L7,4 L0,8 z" fill="#8497a0"/></marker>
+    <marker id="og" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto"><path d="M0,0 L7,4 L0,8 z" fill="#1f9d63"/></marker>
+  </defs>
+  <!-- 业务模块们 只发声 -->
+  <text x="30" y="30" font-family="Noto Sans SC" font-size="10.5" fill="#8497a0">业务模块:只 getLogger(__name__) 发声,不碰 handler</text>
+  <g font-family="JetBrains Mono" font-size="10">
+    <rect x="30" y="42" width="200" height="34" rx="8" fill="#fff" stroke="#0d7d99" stroke-width="1.2"/><text x="44" y="63" fill="#0b6680">od_platform.cli.init_project</text>
+    <rect x="30" y="86" width="200" height="34" rx="8" fill="#fff" stroke="#0d7d99" stroke-width="1.2"/><text x="44" y="107" fill="#0b6680">od_platform.common.system_utils</text>
+    <rect x="30" y="130" width="200" height="34" rx="8" fill="#fff" stroke="#0d7d99" stroke-width="1.2"/><text x="44" y="151" fill="#0b6680">od_platform.common.paths</text>
+  </g>
+  <!-- 冒泡 -->
+  <line x1="230" y1="59" x2="318" y2="95" stroke="#8497a0" stroke-width="1.4" marker-end="url(#bb)"/>
+  <line x1="230" y1="103" x2="318" y2="103" stroke="#8497a0" stroke-width="1.4" marker-end="url(#bb)"/>
+  <line x1="230" y1="147" x2="318" y2="111" stroke="#8497a0" stroke-width="1.4" marker-end="url(#bb)"/>
+  <text x="250" y="78" font-family="Noto Sans SC" font-size="9.5" fill="#8497a0">冒泡 ↗</text>
+
+  <!-- 根 logger -->
+  <rect x="320" y="80" width="180" height="48" rx="10" fill="rgba(13,125,153,.07)" stroke="#0d7d99" stroke-width="1.6"/>
+  <text x="410" y="101" text-anchor="middle" font-family="JetBrains Mono" font-size="11.5" font-weight="700" fill="#0b6680">根 logger "od_platform"</text>
+  <text x="410" y="118" text-anchor="middle" font-family="Noto Sans SC" font-size="9.5" fill="#54666f">挂 handler(只挂这一处) · propagate=False</text>
+
+  <!-- 两个 handler -->
+  <rect x="540" y="48" width="200" height="48" rx="9" fill="#fff" stroke="#1f9d63" stroke-width="1.3"/>
+  <text x="556" y="68" font-family="Archivo" font-weight="700" font-size="11.5" fill="#17794c">控制台 Handler(彩色)</text>
+  <text x="556" y="85" font-family="Noto Sans SC" font-size="9.5" fill="#54666f">colorlog → 终端,给人看</text>
+  <rect x="540" y="112" width="200" height="48" rx="9" fill="#fff" stroke="#5358d4" stroke-width="1.3"/>
+  <text x="556" y="132" font-family="Archivo" font-weight="700" font-size="11.5" fill="#3f44b0">文件 Handler(带时间戳)</text>
+  <text x="556" y="149" font-family="Noto Sans SC" font-size="9.5" fill="#54666f">每次运行一个新 .log,给排查</text>
+  <line x1="500" y1="98" x2="538" y2="74" stroke="#1f9d63" stroke-width="1.4" marker-end="url(#og)"/>
+  <line x1="500" y1="110" x2="538" y2="134" stroke="#1f9d63" stroke-width="1.4" marker-end="url(#og)"/>
+
+  <!-- CLI 入口装一次 -->
+  <rect x="30" y="210" width="710" height="86" rx="11" fill="rgba(184,125,24,.06)" stroke="#b87d18" stroke-width="1.4"/>
+  <text x="48" y="234" font-family="Archivo" font-weight="700" font-size="12" fill="#8a5e12">CLI 入口(initialize_project 最开头)</text>
+  <text x="48" y="258" font-family="JetBrains Mono" font-size="11" fill="#13242c">get_logger(base_path=LOGGING_DIR, log_type="init_project")   # 整个进程只调一次</text>
+  <text x="48" y="280" font-family="Noto Sans SC" font-size="10.5" fill="#54666f">→ 把上面那两个 handler 装到根 logger 上。装完之后,全树的 getLogger(__name__) 自动继承,无需再配。</text>
+</svg>
+</div><figcaption><b>图 2</b>　ODPlatform 的日志设计:<b>业务模块只"发声"</b>(各自 <code>getLogger(__name__)</code>),日志靠<b>冒泡</b>汇到根 logger <code>"od_platform"</code>;<b>CLI 入口只在最开头调一次 <code>get_logger()</code></b> 把 console+file 两个 handler 装上。一处配置,全树受益。</figcaption></figure>
+
+<div class="box biz"><div class="bt">🏢 这样设计换来什么</div>
+<p><strong>零配置</strong>:业务模块顶部一行就够,不用关心 handler。<strong>来源清晰</strong>:日志格式里的 <code>%(name)s</code> 会自动显示是哪个模块打的。<strong>可按子树调级别</strong>:将来想 debug 某个子系统又不想刷屏别的,一行 <code>getLogger("od_platform.xxx").setLevel(DEBUG)</code> 即可。<strong>是 Python 圈的惯用法</strong>:任何成熟项目读起来都是这个味道,新人零障碍。</p></div>
+
+<!-- ───────── 5 ───────── -->
+<h2 id="s5"><span class="no">5</span>logging_utils.py 完整代码 + 逐段导读</h2>
+<p>先装它依赖的彩色库:</p>
+<figure class="code" data-file="安装依赖" data-lang="bash"><script type="text/plain">
+pip install colorlog
+</script></figure>
+<p>下面是 <code>common/logging_utils.py</code> 的<strong>完整真实代码</strong>——D1 实战里你敲的就是这一份。先通读,再看导读。</p>
+<figure class="code" data-file="od_platform/common/logging_utils.py" data-lang="python"><script type="text/plain">
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+# @FileName  : logging_utils.py
+# @Project   : ODPlatform
+# @Function  : 高度可配置的日志工具,创建独立日志文件 + 彩色控制台输出
+#
+# 设计哲学:
+#   - 业务模块: 顶部一行 logger = logging.getLogger(__name__), 不配 handler
+#   - 本模块: 提供 get_logger(), 把 handler 挂到根 logger "od_platform" 上
+#   - CLI 入口: 调用一次 get_logger() 完成 handler 装配,
+#               之后所有 getLogger(__name__) 通过冒泡机制自动继承
+
+import logging
+import sys
+import platform
+from datetime import datetime
+from pathlib import Path
+from typing import Optional
+from colorlog import ColoredFormatter
+
+
+# 项目根 logger 名 = 顶层 Python 包名
+# 业务模块写 getLogger("od_platform.xxx.yyy") 会通过冒泡找到这里挂的 handler
+ROOT_LOGGER_NAME: str = "od_platform"
+
+
+def get_logger(
+    base_path: Path,
+    log_type: str = "general",
+    model_name: Optional[str] = None,
+    log_level: int = logging.INFO,
+    temp_log: bool = False,
+    encoding: str = "utf-8",
+    logger_name: str = ROOT_LOGGER_NAME,
+) -> logging.Logger:
+    """配置项目【根 logger】, 挂上 console + file handler。
+
+    Args:
+        base_path: 日志根目录(通常是 paths.LOGGING_DIR)
+        log_type:  日志类型,如 "init_project" / "train" / "val"
+        model_name: 模型名(如 "yolo11n"),会拼到日志文件名里
+        log_level: 日志级别(默认 INFO)
+        temp_log:  是否标记为临时日志(文件名前缀变成 "temp")
+        encoding:  文件编码(默认 utf-8)
+        logger_name: 要配置的 logger 名(默认是根 logger "od_platform")
+    """
+    # ============================================================
+    # 1. 获取/复用命名 Logger
+    # ============================================================
+    logger = logging.getLogger(logger_name)
+    # 幂等保护: getLogger 是 singleton——同一个 logger_name 多次调用拿到同一对象。
+    # 第一次配好 handler 后, 后续调用直接返回, 避免重复挂(否则同一条日志被打 N 遍)。
+    if logger.handlers:
+        return logger
+
+    logger.setLevel(log_level)
+    logger.propagate = False  # 根 logger 不再向上冒泡(避免与 Python 默认 root 重复输出)
+
+    # ============================================================
+    # 2. 准备日志目录
+    # ============================================================
+    log_dir: Path = base_path / log_type
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    # ============================================================
+    # 3. 构造日志文件名: <prefix>_<timestamp>[_<model>].log
+    # ============================================================
+    timestamp: str = datetime.now().strftime("%Y%m%d-%H%M%S-%f")[:21]
+    prefix = "temp" if temp_log else log_type.replace("_", "-")
+
+    filename_parts = [prefix, timestamp]
+    if model_name:
+        safe_model = "".join(
+            c if c.isalnum() or c in "_-" else "_" for c in model_name
+        )
+        filename_parts.append(safe_model)
+    log_file: Path = log_dir / ("_".join(filename_parts) + ".log")
+
+    # ============================================================
+    # 4. 文件 Handler(完整格式, 含 logger 名 / 行号 / 函数名)
+    # ============================================================
+    # %(name)s 会输出 logger 名, 比如 "od_platform.cli.init_project"
+    # ——这正是 getLogger(__name__) 设计带来的福利:一眼看出日志来源模块
+    file_formatter = logging.Formatter(
+        fmt="%(asctime)s - %(name)s - %(levelname)-8s - "
+            "%(filename)s:%(lineno)d - %(funcName)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    file_handler = logging.FileHandler(log_file, encoding=encoding)
+    file_handler.setLevel(log_level)
+    file_handler.setFormatter(file_formatter)
+    logger.addHandler(file_handler)
+
+    # ============================================================
+    # 5. 控制台 Handler(彩色 + 紧凑格式)
+    # ============================================================
+    console_formatter = ColoredFormatter(
+        "%(log_color)s%(asctime)s%(reset)s "
+        "%(log_color)s[%(levelname)-8s]%(reset)s "
+        "%(cyan)s%(filename)-25s%(reset)s:"
+        "%(blue)s%(lineno)-4d%(reset)s "
+        "%(log_color)s│ %(message)s%(reset)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        log_colors={
+            "DEBUG":    "white",
+            "INFO":     "green",
+            "WARNING":  "yellow",
+            "ERROR":    "red",
+            "CRITICAL": "bold_red,bg_white",
+        },
+        style='%'
+    )
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(log_level)
+    console_handler.setFormatter(console_formatter)
+    logger.addHandler(console_handler)
+
+    # ============================================================
+    # 6. 初始化信息
+    # ============================================================
+    logger.info('=' * 60)
+    logger.info(f"日志系统初始化完成")
+    logger.info(f"运行环境: {platform.system()} {platform.release()}")
+    logger.info(f"阶段类型: {log_type}")
+    logger.info(f"日志文件: {log_file}")
+    logger.info(f"日志级别: {logging.getLevelName(log_level)}")
+    logger.info(f"模型名称: {model_name or '无'}")
+    logger.info('=' * 60)
+
+    return logger
+
+
+if __name__ == "__main__":
+    # 模块自测——演示"基础设施装 handler + 业务模块发声"的标准用法
+    from od_platform.common.paths import LOGGING_DIR
+
+    # 第一步: 装配根 logger 的 handler(这是 CLI 入口该做的事, 这里只是自测演示)
+    get_logger(base_path=LOGGING_DIR, log_type="test", temp_log=True)
+
+    # 第二步: 业务代码就这样写——拿一个 __name__ logger, 直接发声
+    test_logger = logging.getLogger(__name__)
+    test_logger.debug("这是 DEBUG (默认 INFO 级别看不到)")
+    test_logger.info("这是 INFO")
+    test_logger.warning("这是 WARNING")
+    test_logger.error("这是 ERROR")
+</script></figure>
+
+<h4>逐段导读(看完上面代码再读这里)</h4>
+<ul>
+  <li><strong>配的是命名 logger <code>"od_platform"</code>,不是 Python 的真 root。</strong><code>getLogger("od_platform")</code> 拿到的是那棵树的根。我们把 handler 挂在它身上,并设 <code>propagate=False</code> 让它别再往 Python 默认 root 冒泡(否则会和 Python 自带的 root 重复输出)。</li>
+  <li><strong>幂等保护 <code>if logger.handlers: return logger</code>。</strong>这是<strong>头号坑的防护</strong>(详见第 7 节):<code>getLogger</code> 对同一个名字永远返回同一个对象,如果不检查就每次都 <code>addHandler</code>,handler 越加越多、同一条日志被打好几遍。这里发现"已经挂过了"就直接返回。</li>
+  <li><strong>每次运行一个带时间戳的新文件。</strong>文件名 <code>&lt;prefix&gt;_&lt;时间戳&gt;[_&lt;模型名&gt;].log</code>,落在 <code>base_path/log_type/</code> 下。这就是第 3 节说的"按运行切分"——想回看哪一次跑,按文件名一找就到。</li>
+  <li><strong>两个 Handler,各管一头。</strong>文件 Handler 用<strong>详细</strong>格式(时间-模块名-级别-文件:行号-函数名-消息),排查时信息越全越好;控制台 Handler 用 <code>colorlog</code> 的 <strong>彩色紧凑</strong>格式,给人看、别太吵。<strong>注意文件里不上色</strong>(否则是一堆乱码转义符)。</li>
+  <li><strong><code>%(name)s</code> 字段是点睛之笔。</strong>因为业务模块都用 <code>getLogger(__name__)</code>,这个字段会自动显示"这条日志来自哪个模块",排查接力链上的 bug 时极其有用。</li>
+  <li><strong>自测的两步,就是整套设计的缩影。</strong>第一步 <code>get_logger()</code> 装 handler(只有 CLI 入口做),第二步 <code>getLogger(__name__)</code> 发声(所有业务代码都这么写)。</li>
+</ul>
+
+<!-- ───────── 6 ───────── -->
+<h2 id="s6"><span class="no">6</span>在项目里怎么用</h2>
+<p>记住两种角色、两种写法就行:</p>
+<h4>① 业务模块:只发声</h4>
+<figure class="code" data-file="任意业务模块顶部" data-lang="python"><script type="text/plain">
+import logging
+logger = logging.getLogger(__name__)     # 这一行,今天起所有业务模块都一样,永不变化
+
+# 之后任意位置直接发声,不管 handler:
+logger.info("成功创建目录: data/raw")
+logger.warning("原始数据集根目录为空,请放入数据集")
+</script></figure>
+<h4>② CLI 入口:在最开头装一次 handler</h4>
+<figure class="code" data-file="od_platform/cli/init_project.py(节选)" data-lang="python"><script type="text/plain">
+import logging
+from od_platform.common.logging_utils import get_logger
+from od_platform.common.paths import LOGGING_DIR
+
+logger = logging.getLogger(__name__)
+
+
+def initialize_project() -> None:
+    # CLI 入口装配 handler(整个进程只装一次, get_logger 内部有幂等保护)
+    get_logger(base_path=LOGGING_DIR, log_type="init_project")
+
+    logger.info("开始初始化项目核心目录")        # 这条已经能走彩色控制台 + 文件了
+    ...
+</script></figure>
+<p>跑通后,观察日志格式里的 <code>%(name)s</code> 字段——你能看到不同来源的日志名,一眼看出每条来自哪个模块:</p>
+<figure class="code" data-file="控制台/文件输出(示意)" data-lang="text"><script type="text/plain">
+2026-05-12 10:30:00 - od_platform - INFO - 日志系统初始化完成
+2026-05-12 10:30:00 - od_platform.cli.init_project - INFO - 开始初始化项目核心目录
+2026-05-12 10:30:00 - od_platform.common.system_utils - INFO - 运行环境概览
+</script></figure>
+
+<!-- ───────── 7 ───────── -->
+<h2 id="s7"><span class="no">7</span>新手头号坑:日志重复打印</h2>
+<div class="box trap"><div class="bt">⚠ 一条日志被打了 3 遍?八成是这两个原因</div>
+<p><strong>原因一:重复挂 handler。</strong>如果每次都往 logger 上 <code>addHandler</code>,handler 会越加越多,同一条日志被打印 N 遍。本实现用 <code>if logger.handlers: return logger</code> 守住"只配一次"——这就是第 5 节那行幂等保护的意义。<br><strong>原因二:子 logger 也挂了 handler 又没关 <code>propagate</code>。</strong>日志会冒泡到根再被打一遍。<strong>记住我们的纪律:handler 只挂在根 <code>"od_platform"</code> 上,子 logger 只负责发声。</strong>根上则设 <code>propagate=False</code>,不再往 Python 默认 root 冒泡。</p></div>
+
+<!-- ───────── 8 ───────── -->
+<h2 id="s8"><span class="no">8</span>留个悬念:如果让你把它做成"生产级" 🚀</h2>
+<p>今天这套日志,够你在本地翻、亲眼看到每一步发生了什么。但真上了生产,还有一圈活在等着。下面这些问题,我们今天<strong>故意不解决</strong>——留给你先想,留给后面的专题去答。</p>
+<div class="box why"><div class="bt">🤔 留给你的几个开放问题</div>
+<p><strong>① 7×24 的在线服务,日志会不会撑爆磁盘?</strong><br>"按运行切分"靠的是有"一次运行"边界;长跑服务没有。<em>(方向:第 3 节提过的<strong>按大小滚动</strong> <code>RotatingFileHandler</code>——写满就滚、只留最近几份。)</em></p>
+<p><strong>② 错误日志淹没在海量 INFO 里,想单独审计怎么办?</strong><br><em>(方向:再挂一个只收 <code>ERROR+</code> 的 handler,把错误<strong>单独导一份</strong> error 日志,专供追责/监控。)</em></p>
+<p><strong>③ 日志要被 ELK / Loki / Datadog 这类平台采集、检索、告警。</strong><br>纯文本不好机器解析。<em>(方向:<strong>结构化日志</strong>——每条打成一行 JSON,字段化,平台就能按字段查、按阈值告警。)</em></p>
+<p><strong>④ 配置散在代码里,想集中外置成一份配置文件。</strong><br><em>(方向:用 <code>logging.config.dictConfig</code> 把整套配置写成一份字典,甚至外置成 YAML。)</em></p>
+<div class="box biz" style="margin-top:10px"><div class="bt">🏢 而且,这里藏着一个反转</div>
+<p>更值得想的是:<strong>真到了生产,日志可能根本不该往项目目录里写文件。</strong>现代云原生服务遵循 "12-factor" 原则——把日志直接打到标准输出(stdout/stderr),由平台(容器、日志采集器)统一收走,<strong>不在项目树里留文件</strong>。<br>换句话说,我们今天精心设计的"文件日志",搬到生产是<strong>要被换掉</strong>的——它在这里,纯粹是为了让你在本地直接翻、亲眼看见过程。<em>这不是说今天白学了:文件日志是理解整套机制的最好骨架;只是你要心里有数,它的"适用边界"到哪为止。</em></p></div></div>
+
+<!-- ───────── 9 ───────── -->
+<h2 id="s9"><span class="no">9</span>小结</h2>
+<ul>
+  <li><strong>日志是产品的一部分。</strong>不是 <code>print</code> 那种"看一眼就删"的东西——它在你不在场时替你还原现场。</li>
+  <li><strong>四个角色:</strong>Logger(发声入口、有层级)、Handler(去哪)、Formatter(长什么样)、Level(级别闸门)。理解它们就理解了所有日志框架。</li>
+  <li><strong>核心设计:业务发声,基础设施配音响。</strong>业务模块只 <code>getLogger(__name__)</code>;handler 由 <code>get_logger()</code> 挂在根 <code>"od_platform"</code> 上;CLI 入口装一次;日志靠<strong>冒泡</strong>汇拢。</li>
+  <li><strong>两个必记的防坑点:</strong>幂等(<code>if logger.handlers</code>)防重复打印;<code>propagate=False</code> 防二次冒泡。</li>
+  <li><strong>文件按运行切分</strong>(每次跑一个带时间戳的新文件)——适合训练/CLI;长跑服务才用按大小滚动。</li>
+</ul>
+<div class="box judge"><div class="bt">🧭 三篇收个尾</div>
+<p>第一天没写一行检测代码,但你已经把后面所有模块都要踩的地基打牢了:<strong>仓库怎么组织(篇一)、横切关注点怎么用装饰器剥离(篇二)、日志怎么统一(篇三)</strong>。这三样的共同思想是同一句——<strong>把"和业务无关但到处都要"的事,收口成 common 层一处定义、全局复用的工具。</strong>明天开始写数据流水线时,你会发现自己已经在反复用今天造的 <code>get_logger</code> 和 <code>@time_it</code>。好的基础设施,就是让你之后"想都不用想"就能用对的东西。</p></div>
+
+</main>
+</div>
+
+<footer>
+  ODPlatform · 基础设施教学(第一天 · 之三)　//　日志工具 与 企业级日志实践　//　可打印留存
+</footer>
+<!-- highlight.js(在线时高亮;离线则原样显示,代码照常可读) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+  // 把每个 <figure class="code"> 里的原始代码安全注入为高亮代码块。
+  // 用 textContent 写入,浏览器自动转义 < & 等,无需手动转义。
+  document.querySelectorAll('figure.code').forEach(function(fig){
+    var raw = fig.querySelector('script[type="text/plain"]').textContent.replace(/^\n/, '').replace(/\s+$/, '');
+    var fname = fig.getAttribute('data-file') || '';
+    var lang = fig.getAttribute('data-lang') || 'python';
+    // 头部条
+    var head = document.createElement('div');
+    head.className = 'chead';
+    head.innerHTML = '<span class="dots"><i style="background:#e0524b"></i><i style="background:#e3b341"></i><i style="background:#3fb950"></i></span>'
+                   + '<span class="fname">' + fname + '</span><span class="lang">' + lang + '</span>';
+    // 代码体
+    var pre = document.createElement('pre');
+    var code = document.createElement('code');
+    code.className = 'language-' + lang;
+    code.textContent = raw;            // ← 关键:自动转义,代码原样
+    pre.appendChild(code);
+    fig.innerHTML = '';
+    fig.appendChild(head);
+    fig.appendChild(pre);
+    if (window.hljs) { try { hljs.highlightElement(code); } catch(e){} }
+  });
+</script>
+</body>
+</html>

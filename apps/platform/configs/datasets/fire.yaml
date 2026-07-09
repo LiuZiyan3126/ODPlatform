@@ -1,0 +1,25 @@
+path: D:\lab\internship_school\ODPlatform\ODPlatform\data\processed\fire
+train: train/images
+val: val/images
+test: test/images
+names:
+  0: human-fire
+  1: fire
+nc: 2
+odp_meta:
+  schema_version: 1
+  dataset_name: fire
+  source_format: pascal_voc
+  task: detect
+  split:
+    strategy: preserve
+    random_state: 1210
+    rates:
+      train: 0.8739
+      val: 0.0911
+      test: 0.035
+    counts:
+      train: 3298
+      val: 344
+      test: 132
+      total: 3774

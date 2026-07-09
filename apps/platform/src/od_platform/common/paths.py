@@ -157,16 +157,50 @@ def validation_run_dir(run_id: str) -> Path:
     """
     return VALIDATION_RUNS_DIR / run_id
 
-
 # ============================================================
-# D5 runtime config directory
+# D5 增量: 运行配置目录
 # ============================================================
 RUNTIME_CONFIGS_DIR: Path = CONFIGS_DIR / "runtime"
 
 
 def runtime_config_path(name: str) -> Path:
-    """Return runtime config path: <CONFIGS_DIR>/runtime/<name>.yaml."""
+    """返回某个运行配置文件的路径: <CONFIGS_DIR>/runtime/<name>.yaml
+
+    Args:
+        name: 配置名 (如 "train" / "val" / "infer"), 不带 .yaml 后缀
+
+    Returns:
+        Path 对象 (尚未创建, 调用方自己负责 mkdir)
+
+    用法:
+        train_yaml = runtime_config_path("train")
+        # → <APP_DIR>/configs/runtime/train.yaml
+    """
     return RUNTIME_CONFIGS_DIR / f"{name}.yaml"
+
+
+# ============================================================
+# D8 增量: 推理管线配置
+# ============================================================
+INFER_PIPELINE_CONFIG_DIR: Path = RUNTIME_CONFIGS_DIR
+
+
+def pipeline_config_path(name: str = "infer_pipeline") -> Path:
+    """返回推理管线配置文件的路径: <RUNTIME_CONFIGS_DIR>/<name>.yaml
+
+    Args:
+        name: 配置名 (如 "infer_pipeline"), 不带 .yaml 后缀
+
+    Returns:
+        Path 对象
+
+    用法:
+        cfg = pipeline_config_path()
+        # → <APP_DIR>/configs/runtime/infer_pipeline.yaml
+        cfg = pipeline_config_path("my_pipeline")
+        # → <APP_DIR>/configs/runtime/my_pipeline.yaml
+    """
+    return INFER_PIPELINE_CONFIG_DIR / f"{name}.yaml"
 
 
 if __name__ == "__main__":
@@ -184,3 +218,13 @@ if __name__ == "__main__":
     print(f"UNIT TEST DIR = {UNIT_TEST_DIR}")
     for d in get_dirs_to_initialize():
         print(f"将要初始化的目录有: {d.relative_to(ROOT_DIR)}")
+
+
+
+
+
+
+
+
+
+
