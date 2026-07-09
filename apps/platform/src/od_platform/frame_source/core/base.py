@@ -13,7 +13,7 @@ class FrameSource(ABC):
     def __init__(self, source_path: str):
         self.source_path = source_path
         self.frame_index = 0
-        self._strike = 1
+        self._stride = 1
         self._start_time = time.time()
 
     @abstractmethod
@@ -44,11 +44,12 @@ class FrameSource(ABC):
         """设置跳采步长"""
         if stride < 1:
             raise ValueError("stride必须大于等于1")
+        self._stride = stride
         if stride > 1:
             logger.debug(f"{self.__class__.__name__} 设置跳采步长为{stride}")
 
     def stride(self) -> int:
-        return self._strike
+        return self._stride
     
     # 上下文管理器
     def __enter__(self) -> "FrameSource":

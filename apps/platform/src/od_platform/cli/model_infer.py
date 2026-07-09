@@ -66,6 +66,8 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-hud", action="store_true", help="画面不叠 HUD 信息面板.")
 
     # ---- 其他 ----
+    p.add_argument("--stride", type=int, default=None,
+                   help="跳帧步长 (每N帧取1帧, 默认1不跳).")
     p.add_argument("--warmup", type=int, default=0,
                    help="启动丢弃前 N 帧 (摄像头帧率不稳).")
     p.add_argument("--log-level", type=str, default="INFO",
@@ -105,6 +107,7 @@ def main(argv: list[str] | None = None) -> int:
         beautify=(not ns.no_viz),
         show_info=(not ns.no_hud),
         warmup_frames=ns.warmup,
+        stride=ns.stride,
         # ★ 不传 output_sink / hooks / cancel_token → service 走默认 → 等价老式 CLI
     )
 

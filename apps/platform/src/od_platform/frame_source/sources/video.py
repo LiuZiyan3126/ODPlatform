@@ -14,7 +14,8 @@ from typing import Optional
 import cv2
 
 from ..core.base import FrameSource
-from ..core.types import Frame, FrameInfo, SourceType
+from ..core.types import Frame, FrameInfo, SourceType, VIDEO_EXTENSIONS
+from ..registry import register_source
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,6 @@ class VideoSource(FrameSource):
         self._total_frames: int = 0
         self._filename = Path(video_path).name
         self._frame_index = 0
-        self._stride = 1
 
     def open(self) -> bool:
         self._frame_index = 0
@@ -110,10 +110,6 @@ class VideoSource(FrameSource):
             logger.warning(f"视频跳转到帧 {target} 失败")
         return ok
 
-    def set_stride(self, stride: int) -> None:
-        super().set_stride(stride)
-        self._stride = stride
-
     @property
     def seekable(self) -> bool:
         return True
@@ -123,3 +119,20 @@ class VideoSource(FrameSource):
         if self._fps > 0 and self._total_frames > 0:
             return self._total_frames / self._fps
         return 0.0
+
+
+_STREAM_SCHEMES = ("rtsp://", "http://", "https://", "rtmp://")
+
+
+@register_source("video_stream",
+                 detect=lambda s: s.lower().startswith(_STREAM_SCHEMES), priority=1)
+def _build_video_stream(source: str, camera_config, options) -> VideoSource:
+    return VideoSource(source)
+
+
+@register_source("video_file",
+                 detect=lambda s: (Path(s).exists() and Path(s).is_file()
+                                   and Path(s).suffix.lower() in VIDEO_EXTENSIONS),
+                 priority=3)
+def _build_video_file(source: str, camera_config, options) -> VideoSource:
+    return VideoSource(source)

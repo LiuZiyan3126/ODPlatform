@@ -83,12 +83,13 @@ class _Controller:
 class _Reader(Thread):
     """读帧线程. 相机: 只留最新 (低延迟); 视频/图片: 有界阻塞 (全处理不丢)."""
 
-    def __init__(self, source, camera_config, *, live: bool, capacity: int, capture_fps) -> None:
+    def __init__(self, source, camera_config, *, live: bool, capacity: int, capture_fps, stride: int = 1) -> None:
         super().__init__(daemon=True)
         self._source = source
         self._camera_config = camera_config
         self._live = live
         self._capture_fps = capture_fps
+        self._stride = stride
         self.q: Queue = Queue(maxsize=1 if live else capacity)
         self._stop_evt = Event()
         self.source_type = None
@@ -96,7 +97,7 @@ class _Reader(Thread):
 
     def run(self) -> None:
         try:
-            with create_frame_source(self._source, camera_config=self._camera_config) as src:
+            with create_frame_source(self._source, camera_config=self._camera_config, stride=self._stride) as src:
                 self.source_type = src.get_source_type()
                 t_prev = time.perf_counter()
                 for frame in src:
@@ -281,6 +282,7 @@ class ThreadedPipeline:
         warmup_frames,
         hooks: InferHooks | None = None,
         cancel_token: CancelToken | None = None,
+        stride: int = 1,
     ) -> None:
         self.proc = processor
         self.source = str(source)
@@ -295,6 +297,7 @@ class ThreadedPipeline:
         self.warmup_frames = warmup_frames
         self.hooks = hooks if hooks is not None else InferHooks()
         self.cancel_token = cancel_token
+        self.stride = stride
 
     def _is_cancelled(self) -> bool:
         """统一查询入口 (cancel_token 为 None 时永远 False, 零开销)."""
@@ -308,7 +311,8 @@ class ThreadedPipeline:
         render_drop = not self.save
 
         reader = _Reader(s, self.camera_config, live=live,
-                         capacity=max(eff_batch * 2, 8), capture_fps=m.capture)
+                         capacity=max(eff_batch * 2, 8), capture_fps=m.capture,
+                         stride=self.stride)
         in_q: Queue = Queue(maxsize=max(eff_batch * 2, 4))
         out_q: Queue = Queue(maxsize=2)
         controller = _Controller()

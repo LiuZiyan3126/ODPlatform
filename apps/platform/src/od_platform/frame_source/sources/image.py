@@ -15,7 +15,8 @@ import cv2
 import numpy as np
 
 from ..core.base import FrameSource
-from ..core.types import Frame,FrameInfo, IMAGE_EXTENSIONS, SourceType
+from ..core.types import Frame, FrameInfo, IMAGE_EXTENSIONS, SourceType
+from ..registry import register_source
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +65,6 @@ class ImageSource(FrameSource):
 class ImageFolderSource(FrameSource):
     def __init__(self, folder_path: str):
         super().__init__(folder_path)
-        self._stride: int = 1
         self._image_files: List[Path] = []
         self._current_index = 0
 
@@ -130,3 +130,18 @@ class ImageFolderSource(FrameSource):
     @property
     def seekable(self) -> bool:
         return True
+
+
+@register_source("image_folder",
+                 detect=lambda s: Path(s).exists() and Path(s).is_dir(),
+                 priority=2)
+def _build_image_folder(source: str, camera_config, options) -> ImageFolderSource:
+    return ImageFolderSource(source)
+
+
+@register_source("image_file",
+                 detect=lambda s: (Path(s).exists() and Path(s).is_file()
+                                   and Path(s).suffix.lower() in IMAGE_EXTENSIONS),
+                 priority=4)
+def _build_image_file(source: str, camera_config, options) -> ImageSource:
+    return ImageSource(source)

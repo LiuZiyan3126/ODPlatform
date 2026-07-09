@@ -31,6 +31,7 @@ import cv2
 from ..core.base   import FrameSource
 from ..core.config import CameraConfig
 from ..core.types  import Frame, FrameInfo, SourceType
+from ..registry     import register_source
 
 
 logger = logging.getLogger(__name__)
@@ -175,3 +176,11 @@ class CameraSource(FrameSource):
 
     def get_source_type(self) -> SourceType:
         return SourceType.CAMERA
+
+
+@register_source("camera", detect=lambda s: s.isdigit(), priority=0)
+def _build_camera_source(source: str, camera_config, options) -> CameraSource:
+    camera_id = int(source)
+    cfg = camera_config or CameraConfig()
+    cfg = cfg.model_copy(update={"camera_id": camera_id})
+    return CameraSource(cfg)

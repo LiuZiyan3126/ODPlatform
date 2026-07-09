@@ -197,6 +197,7 @@ class InferService:
         output_sink: OutputSink | None = None,
         hooks: InferHooks | None = None,
         cancel_token: CancelToken | None = None,
+        stride: int | None = None,
     ) -> InferResult:
         """跑一次完整推理.
 
@@ -338,6 +339,7 @@ class InferService:
 
             from .pipeline import ThreadedPipeline
             logger.info(f"执行引擎: 多线程流水线 (batch={batch_size}, 显示与主循环解耦)")
+            effective_stride = stride if stride is not None else pipe.stride
             pipeline = ThreadedPipeline(
                 processor=processor,
                 source=str(raw_source),
@@ -352,6 +354,7 @@ class InferService:
                 warmup_frames=warmup_frames,
                 hooks=hooks,
                 cancel_token=cancel_token,
+                stride=effective_stride,
             )
             interrupted = pipeline.run(stats)
 
@@ -514,6 +517,7 @@ def infer_yolo(
     output_sink: OutputSink | None = None,
     hooks: InferHooks | None = None,
     cancel_token: CancelToken | None = None,
+    stride: int | None = None,
 ) -> InferResult:
     """一行启动推理 —— 风格跟 D5 build_infer_config / D6 train_yolo 一致."""
     service = InferService()
@@ -530,4 +534,5 @@ def infer_yolo(
         output_sink=output_sink,
         hooks=hooks,
         cancel_token=cancel_token,
+        stride=stride,
     )
