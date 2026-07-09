@@ -22,11 +22,8 @@ DISPLAY_MAX_HEIGHT = 720
 
 # ── 标签映射 ───────────────────────────────────────────────
 LABEL_MAPPING = {
-    "person":          "人员",
-    "safety_helmet":   "安全帽",
-    "reflective_vest": "反光衣",
-    "head":            "未佩戴安全帽",
-    "ordinary_clothes": "未穿戴反光衣"
+    "fire":         "火",
+    "human-fire":   "人用火",
 }
 
 # ── BGR 颜色 (B=G) ─────────────────────────────────────────

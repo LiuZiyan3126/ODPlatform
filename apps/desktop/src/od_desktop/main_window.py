@@ -15,7 +15,6 @@ from od_platform.common.system_utils import get_basic_device_info
 from .pages.project_page import ProjectPage
 from .pages.data_pipeline_page import DataPipelinePage
 from .pages.validation_page import ValidationPage
-from .pages.training_page import TrainingPage
 from .pages.inference_page import InferencePage
 from .pages.config_editor_page import ConfigEditorPage
 from .widgets.log_viewer import LogViewer
@@ -27,7 +26,6 @@ TAB_LABELS = [
     ("数据流水线", "pipeline"),
     ("数据质检", "validation"),
     ("配置编辑器", "config"),
-    ("模型训练", "training"),
     ("模型推理", "inference"),
 ]
 
@@ -66,7 +64,6 @@ class MainWindow(QMainWindow):
             "pipeline": DataPipelinePage(),
             "validation": ValidationPage(),
             "config": ConfigEditorPage(),
-            "training": TrainingPage(),
             "inference": InferencePage(),
         }
 
@@ -191,7 +188,7 @@ class MainWindow(QMainWindow):
     def _find_running_workers(self) -> list[tuple[QWidget, str]]:
         """查找运行中的 worker. 返回 [(page, worker_name), ...]."""
         running = []
-        for key in ("training", "inference", "pipeline"):
+        for key in ("inference", "pipeline"):
             page = self._pages.get(key)
             if page and hasattr(page, '_worker') and page._worker:
                 if page._worker.isRunning():

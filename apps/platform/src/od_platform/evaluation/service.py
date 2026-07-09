@@ -141,6 +141,7 @@ class ValService:
             metrics = TrainMetrics.from_yolo_results(
                 val_results,
                 model_trainer=getattr(model, "trainer", None),
+                task=config.task,
             )
             log_train_metrics(metrics, logger=logger)
 

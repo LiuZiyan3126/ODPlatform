@@ -86,10 +86,26 @@ class TrainMetrics:
         cls,
         results: Any,
         model_trainer: Any = None,
+        task: str | None = None,
     ) -> "TrainMetrics":
         """从 ultralytics 的训练/验证结果对象构造 TrainMetrics."""
         # 1. task
-        task = getattr(results, "task", "unknown")
+        resolved_task = task or getattr(results, "task", None)
+        if not resolved_task and model_trainer is not None:
+            resolved_task = getattr(model_trainer, "task", None)
+            trainer_args = getattr(model_trainer, "args", None)
+            if not resolved_task and isinstance(trainer_args, dict):
+                resolved_task = trainer_args.get("task")
+            elif not resolved_task and trainer_args is not None:
+                resolved_task = getattr(trainer_args, "task", None)
+
+        results_dict = getattr(results, "results_dict", {}) or {}
+        if not resolved_task:
+            if any("(M)" in key for key in results_dict):
+                resolved_task = Task.SEGMENT
+            elif any("(B)" in key for key in results_dict):
+                resolved_task = Task.DETECT
+        resolved_task = str(resolved_task or "unknown").casefold()
 
         # 2. save_dir(results 优先, trainer 备胎, 都没就 unknown)
         save_dir_raw = getattr(results, "save_dir", None)
@@ -109,7 +125,6 @@ class TrainMetrics:
         speed_ms["total"] = sum(valid) if valid else math.nan
 
         # 4. overall 指标
-        results_dict = getattr(results, "results_dict", {}) or {}
         overall: dict[str, float] = {
             "fitness": _safe_float(getattr(results, "fitness", None)),
         }
@@ -126,7 +141,7 @@ class TrainMetrics:
                     class_map[class_name] = _safe_float(maps[idx])
 
         return cls(
-            task=task,
+            task=resolved_task,
             save_dir=save_dir,
             timestamp=datetime.now().isoformat(timespec="seconds"),
             speed_ms=speed_ms,

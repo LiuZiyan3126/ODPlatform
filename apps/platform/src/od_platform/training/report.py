@@ -3,7 +3,10 @@
 """训练报告 Markdown + HTML 生成器."""
 from __future__ import annotations
 
+import html
+import json
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -16,6 +19,42 @@ if TYPE_CHECKING:
     from od_platform.training.service import TrainResult
 
 logger = logging.getLogger(__name__)
+
+
+def _data_quality_display(
+    report_path_raw: str | None,
+    output_dir: Path,
+) -> tuple[str, str]:
+    """Build Markdown and HTML labels for a linked validation report."""
+    if not report_path_raw:
+        return "未验证", "未验证"
+
+    report_path = Path(report_path_raw).expanduser().resolve()
+    severity = ""
+    link_target = report_path
+    if report_path.suffix.casefold() == ".json":
+        try:
+            payload = json.loads(report_path.read_text(encoding="utf-8"))
+            severity = str(payload.get("overall_severity") or "")
+            html_artifact = payload.get("artifacts", {}).get("html")
+            if html_artifact:
+                link_target = Path(html_artifact)
+            elif report_path.with_name("report.html").is_file():
+                link_target = report_path.with_name("report.html")
+        except (OSError, ValueError, TypeError, json.JSONDecodeError):
+            pass
+
+    label = f"已验证（{severity}） · 查看报告" if severity else "已验证 · 查看报告"
+    try:
+        link = os.path.relpath(link_target, output_dir).replace("\\", "/")
+    except ValueError:
+        link = link_target.as_uri()
+    markdown_label = f"[{label}]({link})"
+    html_label = (
+        f'<a href="{html.escape(link, quote=True)}">'
+        f"{html.escape(label)}</a>"
+    )
+    return markdown_label, html_label
 
 
 def _format_duration(seconds: float | None) -> str:
@@ -662,11 +701,10 @@ def generate_train_report(
             gpu_rows += f'<div class="info-item"><span class="info-key">GPU {i}</span><span class="info-val">{gpu_name}</span></div>\n'
 
     # ---- 数据集 ----
-    data_quality = "-"
-    if data_quality_report_path:
-        data_quality = f"[查看报告]({data_quality_report_path})"
-    elif data_path_raw:
-        data_quality = "未验证"
+    data_quality, data_quality_html = _data_quality_display(
+        data_quality_report_path,
+        result.output_dir,
+    )
 
     # ---- 训练配置 ----
     if config_summary is None:
@@ -779,7 +817,7 @@ def generate_train_report(
             gpu_rows=gpu_rows,
             data_name=data_name or "-",
             data_path=data_path_raw or "-",
-            data_quality=data_quality,
+            data_quality=data_quality_html,
             config_rows=config_rows,
             audit_path=audit_snapshot,
             metrics=result.metrics,

@@ -20,6 +20,7 @@ dependencies = [
     "pydantic>=2.13.4,<3",
     "pandas>=3.0.3,<4",
     "python-docx>=1.0.0",
+    "Markdown>=3.5",
 ]
 
 [project.optional-dependencies]  # 可选的依赖组

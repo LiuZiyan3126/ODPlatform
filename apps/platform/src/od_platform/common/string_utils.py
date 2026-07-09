@@ -4,6 +4,10 @@
 # @Author    : 雨霓同学
 # @Project   : ODPlatform
 # @Function  : 字符串工具——CJK 感知的对齐 / 表格格式化 / 字节大小格式化
+import re
+
+
+_ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
 
 def format_size(bytes_size: int) -> str:
@@ -46,7 +50,8 @@ def get_display_width(text: str) -> int:
         >>> get_display_width("hi你好")
         6
     """
-    return sum(2 if _is_wide_char(c) else 1 for c in text)
+    visible_text = _ANSI_ESCAPE_RE.sub("", text)
+    return sum(2 if _is_wide_char(c) else 1 for c in visible_text)
 
 
 def _is_wide_char(char: str) -> bool:

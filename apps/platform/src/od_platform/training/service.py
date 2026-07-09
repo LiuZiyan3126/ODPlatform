@@ -29,6 +29,7 @@ from od_platform.validate_dataset.service import validate_dataset
 from od_platform.runtime_config import build_train_config # 获取训练配置的
 
 from .archive import archive_checkpoints
+from .data_quality import find_latest_validation_report
 from .report import generate_train_report
 
 logger = logging.getLogger(__name__)
@@ -124,7 +125,9 @@ class TrainService:
             # 记录结果指标
             logger.info("训练完成".center(60))
             metrics = TrainMetrics.from_yolo_results(
-                yolo_results, model_trainer=getattr(model, "trainer", None)
+                yolo_results,
+                model_trainer=getattr(model, "trainer", None),
+                task=config.task,
             )
             log_train_metrics(metrics, logger=logger)
 
@@ -178,6 +181,18 @@ class TrainService:
             }
             exp_name = getattr(config, "experiment_name", "") or ""
             elapsed = (datetime.now() - start).total_seconds()
+            resolved_quality_report = data_quality_report_path
+            if resolved_quality_report is None:
+                matched_report = find_latest_validation_report(
+                    data_path,
+                    not_after=start,
+                )
+                if matched_report is not None:
+                    resolved_quality_report = str(matched_report)
+                    logger.info(
+                        "已自动关联数据质检报告: %s",
+                        matched_report,
+                    )
             report_path = generate_train_report(
                 TrainResult(
                     success=True,
@@ -194,7 +209,7 @@ class TrainService:
                 task=config.task,
                 data_name=raw_data,
                 data_path_raw=str(data_path),
-                data_quality_report_path=data_quality_report_path,
+                data_quality_report_path=resolved_quality_report,
                 config_summary=config_summary,
                 started_at=start,
             )

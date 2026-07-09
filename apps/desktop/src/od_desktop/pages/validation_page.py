@@ -129,12 +129,20 @@ class ValidationPage(QWidget):
         self._refresh_datasets()
 
     def _refresh_datasets(self) -> None:
+        previous = self._dataset_combo.currentText().strip()
         self._datasets = _scan_dataset_yamls()
         self._dataset_combo.clear()
         if self._datasets:
             self._dataset_combo.addItems(self._datasets)
+            if previous in self._datasets:
+                self._dataset_combo.setCurrentText(previous)
         else:
             self._dataset_combo.setEditText("(无数据集, 请先运行数据流水线)")
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        if not (self._worker and self._worker.isRunning()):
+            self._refresh_datasets()
 
     def _on_run(self) -> None:
         if self._worker and self._worker.isRunning():

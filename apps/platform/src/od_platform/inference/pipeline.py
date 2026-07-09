@@ -26,6 +26,7 @@ loop FPS 测量纪律 (见 7.9.3):
 from __future__ import annotations
 
 import logging
+import sys
 import time
 from queue import Empty, Full, Queue
 from threading import Event, Lock, Thread
@@ -40,6 +41,41 @@ from .sinks import NullSink, OutputSink
 logger = logging.getLogger(__name__)
 
 _SENTINEL = object()
+
+
+def _screen_work_area() -> tuple[int, int]:
+    """Return the primary screen work area, with a conservative fallback."""
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            rect = wintypes.RECT()
+            spi_get_work_area = 0x0030
+            ok = ctypes.windll.user32.SystemParametersInfoW(
+                spi_get_work_area, 0, ctypes.byref(rect), 0
+            )
+            if ok:
+                return rect.right - rect.left, rect.bottom - rect.top
+        except (AttributeError, OSError):
+            pass
+    return 1280, 720
+
+
+def _fit_preview_size(
+    frame_width: int,
+    frame_height: int,
+    screen_width: int,
+    screen_height: int,
+) -> tuple[int, int]:
+    """Fit a preview inside the screen while preserving its aspect ratio."""
+    max_width = max(1, int(screen_width * 0.90))
+    max_height = max(1, int(screen_height * 0.85))
+    scale = min(1.0, max_width / frame_width, max_height / frame_height)
+    return (
+        max(1, round(frame_width * scale)),
+        max(1, round(frame_height * scale)),
+    )
 
 
 def _put_latest(q: Queue, item) -> None:
@@ -223,6 +259,7 @@ class _Display(Thread):
         self._key_lock = Lock()
         self._key = -1
         self._last = None
+        self._window_frame_size: tuple[int, int] | None = None
 
     def stop(self) -> None:
         self._stop_evt.set()
@@ -249,6 +286,24 @@ class _Display(Thread):
                     frame = self._last.copy()
                     draw_pause(frame)
             if frame is not None:
+                frame_size = (frame.shape[1], frame.shape[0])
+                if frame_size != self._window_frame_size:
+                    flags = cv2.WINDOW_NORMAL
+                    if hasattr(cv2, "WINDOW_KEEPRATIO"):
+                        flags |= cv2.WINDOW_KEEPRATIO
+                    cv2.namedWindow(self._win, flags)
+                    screen_width, screen_height = _screen_work_area()
+                    preview_width, preview_height = _fit_preview_size(
+                        *frame_size,
+                        screen_width,
+                        screen_height,
+                    )
+                    cv2.resizeWindow(
+                        self._win,
+                        preview_width,
+                        preview_height,
+                    )
+                    self._window_frame_size = frame_size
                 cv2.imshow(self._win, frame)
             key = poll() & 0xFF
             if key != 255:

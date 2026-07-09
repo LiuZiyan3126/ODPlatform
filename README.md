@@ -65,31 +65,33 @@ pip install -e apps/desktop
 odp-init
 
 # 2. 数据流水线（Pascal VOC → YOLO → 划分）
-odp-transform --dataset fire --format pascal_voc --task detect
+odp-transform --dataset fire --format pascal_voc --task detect --split-mode preserve --classes fire human-fire
 # 第二次运行可跳过已完成的划分：
 odp-transform --dataset fire --format pascal_voc --skip-if-exists
 
 # 3. 数据质检
-odp-validate --data configs/datasets/fire.yaml
+odp-validate --dataset fire --task detect
 # 产出: report.json + issues.csv + report.html + report.docx
 
-# 4. 模型训练
-odp-train --data configs/datasets/fire.yaml --model yolo11n.pt --epochs 100 --author "你的名字"
+# 4. YAML生成
+odp-gen-config train / val / infer
+# 产出: train.yaml / val.yaml / infer.yaml
+
+# 5. 模型训练
+odp-train --epochs 1 --batch 16 --device 0 --model yolo11n.pt --data fire.yaml --yaml train.yaml --experiment-name fire_smoke_test --author zpx
 # 产出: 权重归档 + report.md + report.html + od_audit.json
 
-# 5. 模型评估
-odp-eval --model models/trained/<train-dir>-best.pt --data fire.yaml --split test
-odp-compare --models a.pt b.pt --data fire.yaml   # 多模型对比
+# 6. 模型评估
+odp-eval --model train-4-20260707-233005-yolo11n-best.pt --yaml val.yaml --data fire.yaml
+odp-compare --models train-4-20260707-233005-yolo11n-best.pt train-20260708-224717-yolo11n-best.pt --yaml val.yaml --data fire.yaml   # 多模型对比
 
-# 6. 模型推理
-odp-infer --model models/trained/<train-dir>-best.pt --source 0          # 摄像头
-odp-infer --model models/trained/<train-dir>-best.pt --source video.mp4  # 视频
+# 7. 模型推理
+odp-infer --source fire.mp4 --batch 1 --warmup 30 --show --model train-4-20260707-233005-yolo11n-best.pt --pipeline-yaml infer_pipeline.yaml --yaml infer.yaml --no-save
 
-# 7. 查看所有报告
-odp-reports list
-odp-reports export -o ./all_reports --format html
+# 8. 推理加速
+yolo export model=models\trained\train-4-20260707-233005-yolo11n-best.pt format=engine half=True dynamic=True batch=1 workspace=2 device=0
 
-# 8. 重置项目（自动备份后清理）
+# 9. 重置项目（自动备份后清理）
 odp-reset               # 预览（dry-run）
 odp-reset --yes         # 备份到 backups/ 后删除
 odp-reset --yes --no-backup  # 跳过备份直接删除
