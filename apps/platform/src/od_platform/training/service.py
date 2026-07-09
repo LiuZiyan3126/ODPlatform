@@ -29,6 +29,7 @@ from od_platform.validate_dataset.service import validate_dataset
 from od_platform.runtime_config import build_train_config # 获取训练配置的
 
 from .archive import archive_checkpoints
+from .report import generate_train_report
 
 logger = logging.getLogger(__name__)
 def _find_project_log_path() -> Path | None:
@@ -63,6 +64,9 @@ class TrainService:
         *,
         archive: bool = True,
         rename_log: bool = True,
+        author: str = "",
+        data_quality_report_path: str | None = None,
+        auto_eval: bool = False,
         ) -> TrainResult:
         start = datetime.now()
         output_dir: Path | None = None
@@ -155,10 +159,65 @@ class TrainService:
             except OSError as e:
                 logger.warning(f"审计快照失败: {e}")
                 audit_path = None
+
+            # 解析权重路径
+            best_weight = archived.get("best") or (output_dir / "weights" / "best.pt")
+            last_weight = archived.get("last") or (output_dir / "weights" / "last.pt")
+
+            # 训练报告生成
+            config_summary = {
+                "model": raw_model,
+                "data": raw_data,
+                "epochs": getattr(config, "epochs", "-"),
+                "batch": getattr(config, "batch", "-"),
+                "imgsz": getattr(config, "imgsz", "-"),
+                "optimizer": getattr(config, "optimizer", "-"),
+                "lr0": getattr(config, "lr0", "-"),
+                "device": getattr(config, "device", "-"),
+                "amp": getattr(config, "amp", "-"),
+            }
+            exp_name = getattr(config, "experiment_name", "") or ""
+            elapsed = (datetime.now() - start).total_seconds()
+            report_path = generate_train_report(
+                TrainResult(
+                    success=True,
+                    output_dir=output_dir,
+                    best_weight=best_weight if best_weight.exists() else None,
+                    last_weight=last_weight if last_weight.exists() else None,
+                    metrics=metrics.overall,
+                    train_time=elapsed,
+                    audit_path=audit_path,
+                    log_path=log_path,
+                ),
+                author=author,
+                experiment_name=exp_name,
+                task=config.task,
+                data_name=raw_data,
+                data_path_raw=str(data_path),
+                data_quality_report_path=data_quality_report_path,
+                config_summary=config_summary,
+                started_at=start,
+            )
+            logger.info(f"训练报告: {report_path}")
+
+            # 自动评估
+            eval_result = None
+            if auto_eval and best_weight.exists():
+                try:
+                    from od_platform.evaluation.service import ValService
+                    eval_service = ValService()
+                    eval_result = eval_service.evaluate(
+                        model_path=best_weight,
+                        data_path=str(data_path),
+                        split="test",
+                        author=author,
+                    )
+                    logger.info(f"自动评估完成: {eval_result.output_dir}")
+                except Exception as eval_err:
+                    logger.warning(f"自动评估失败: {eval_err}")
+
             # 收尾：TrainResult
             train_time = (datetime.now() - start).total_seconds()
-            best_weight = archived.get("best") or (output_dir / "weight"/ "bset.pt")
-            last_weight = archived.get("last") or (output_dir / "weight"/ "last.pt")
 
             logger.info("训练结果".center(60))
             logger.info(f"输出目录： {output_dir}")
@@ -194,6 +253,9 @@ def train_yolo(
         *,
         rename_log: bool = True,
         archive: bool = True,
+        author: str = "",
+        data_quality_report_path: str | None = None,
+        auto_eval: bool = False,
     ) -> TrainResult:
     service = TrainService()
     return service.train(
@@ -201,6 +263,9 @@ def train_yolo(
         cli_args=cli_args,
         archive=archive,
         rename_log=rename_log,
+        author=author,
+        data_quality_report_path=data_quality_report_path,
+        auto_eval=auto_eval,
     )
 
 

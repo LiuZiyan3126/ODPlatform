@@ -37,6 +37,8 @@ odp-validate = 'od_platform.cli.validate_data:main'
 odp-gen-config = 'od_platform.runtime_config.generator:main'
 odp-train = "od_platform.cli.model_train:main"
 odp-infer = "od_platform.cli.model_infer:main"
+odp-eval = "od_platform.cli.model_eval:main"
+odp-compare = "od_platform.cli.model_compare:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/od_platform"]

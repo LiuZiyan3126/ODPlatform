@@ -71,6 +71,20 @@ def build_parser() -> argparse.ArgumentParser:
         help="不把日志文件名改成 <save_dir>_<ts>_<model>.log 形式",
     )
 
+    # ---- 训练报告 ----
+    parser.add_argument(
+        "--author", type=str, default="",
+        help="训练人标识，写入训练报告",
+    )
+    parser.add_argument(
+        "--data-quality-report", dest="data_quality_report", type=str, default=None,
+        help="数据质量报告 JSON 路径（可选引用，写入训练报告）",
+    )
+    parser.add_argument(
+        "--auto-eval", dest="auto_eval", action="store_true", default=False,
+        help="训练完成后自动在 test 数据上评估最佳模型",
+    )
+
     # ---- 可选辅助 ----
     parser.add_argument(
         "--log-level", default="INFO",
@@ -117,6 +131,7 @@ def main() -> int:
     NON_CONFIG_KEYS = {
         "yaml", "pre_validate", "archive", "rename_log",
         "academic_plots", "log_level",
+        "author", "data_quality_report", "auto_eval",
     }
     cli_args = {
         k: v for k, v in vars(args).items()
@@ -132,6 +147,9 @@ def main() -> int:
             cli_args=cli_args,
             archive=args.archive,
             rename_log=args.rename_log,
+            author=args.author,
+            data_quality_report_path=args.data_quality_report,
+            auto_eval=args.auto_eval,
         )
     except KeyboardInterrupt:
         log.warning("用户中断 (Ctrl+C)")
