@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling>=1.18.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "od-desktop"
+dynamic = ["version"]
+description = "ODPlatform Desktop GUI — PySide6 前端"
+requires-python = ">=3.10"
+dependencies = [
+    "od-platform",
+    "PySide6>=6.6.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-qt>=4.2.0",
+    "ruff>=0.1.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/od_desktop"]
+
+[tool.hatch.version]
+path = "src/od_desktop/_version.py"
+
+[project.scripts]
+od-desktop = "od_desktop.app:main"
