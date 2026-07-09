@@ -5,7 +5,7 @@ import logging
 from typing import Optional
 
 from PySide6.QtCore import Qt, Signal, QObject
-from PySide6.QtGui import QColor, QTextCursor
+from PySide6.QtGui import QColor, QTextCharFormat, QTextCursor
 from PySide6.QtWidgets import QPlainTextEdit, QVBoxLayout, QWidget, QPushButton, QHBoxLayout
 
 LEVEL_COLORS = {
@@ -91,7 +91,7 @@ class LogViewer(QWidget):
 
     def _on_log(self, message: str, levelno: int) -> None:
         color = LEVEL_COLORS.get(levelno, QColor(200, 200, 200))
-        self._text.moveCursor(QTextCursor.End)
-        self._text.setTextColor(color)
-        self._text.insertPlainText(message + "\n")
-        self._text.moveCursor(QTextCursor.End)
+        fmt = QTextCharFormat()
+        fmt.setForeground(color)
+        self._text.setCurrentCharFormat(fmt)
+        self._text.appendPlainText(message)
