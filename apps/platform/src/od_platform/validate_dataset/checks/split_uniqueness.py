@@ -55,6 +55,7 @@ def validate_split_uniqueness(ctx: CheckContext) -> CheckResult:
                 "split_a": s1,
                 "split_b": s2,
                 "count":   len(common),
+                "files": stems_sorted,
                 "preview": stems_sorted[:OVERLAP_PREVIEW_LIMIT],
             })
 

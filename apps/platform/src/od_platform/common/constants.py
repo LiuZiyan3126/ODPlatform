@@ -34,10 +34,11 @@ class SplitStrategy:
     RANDOM = "random"                          # 纯随机:对稀有类不公平
     STRATIFIED = "stratified"                  # 主类别分层:稀有类不至于整体消失
     STRATIFIED_MULTILABEL = "stratified_multilabel"  # 多标签分层:连次要稀有类也照顾
+    HASH = "hash"                              # 稳定哈希:追加数据不改变旧样本归属
 
     @classmethod
     def all(cls) -> Tuple[str, ...]:
-        return cls.RANDOM, cls.STRATIFIED, cls.STRATIFIED_MULTILABEL
+        return cls.RANDOM, cls.STRATIFIED, cls.STRATIFIED_MULTILABEL, cls.HASH
 
 # —— 默认值(阶段 4)————————————————————————————————————————————————
 DEFAULT_SPLIT_STRATEGY = SplitStrategy.RANDOM   # 不指定 --split-strategy 时的默认

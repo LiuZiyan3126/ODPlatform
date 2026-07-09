@@ -144,8 +144,10 @@ def build_snapshot(yaml_path: Path,task_type: Optional[str] = None)-> DatasetSna
     data_root = _resolve_data_root(yaml_path, yaml_data)
     nc = yaml_data.get("nc") if isinstance(yaml_data.get('nc'), int) else None
     class_names = _normalize_names(yaml_data.get("names"))
-    # 任务类型
-    resolved_task = task_type or yaml_data.get("task") or  Task.DETECT
+    # 任务类型：兼容旧 YAML 顶层 task，也读取当前 odp_meta.task。
+    odp_meta = yaml_data.get("odp_meta")
+    metadata_task = odp_meta.get("task") if isinstance(odp_meta, dict) else None
+    resolved_task = task_type or yaml_data.get("task") or metadata_task or Task.DETECT
     if resolved_task not in (Task.DETECT, Task.SEGMENT):
         warnings.append(f"Invalid task type: {resolved_task}. Using {Task.DETECT} instead.")
         resolved_task = Task.DETECT

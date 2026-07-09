@@ -45,6 +45,8 @@ def render_to_logger(
     report:      ValidationReport,
     logger:      logging.Logger,
     report_path: Optional[Path] = None,
+    issues_csv_path: Optional[Path] = None,
+    html_report_path: Optional[Path] = None,
 ) -> None:
     """把 ValidationReport 渲染成三段式日志输出。
 
@@ -57,7 +59,7 @@ def render_to_logger(
     if report.failed_results:
         _render_failure_details(report.failed_results, logger)
 
-    _render_footer(report_path, logger)
+    _render_footer(report_path, issues_csv_path, html_report_path, logger)
 
 
 # ============================================================
@@ -171,6 +173,42 @@ def _render_one_check_details(r: CheckResult, logger: logging.Logger) -> None:
             for stem in o["preview"][:5]:
                 logger.info(f"          {stem}")
 
+    elif r.name == "orphan_labels":
+        for split, count in det.get("orphan_per_split", {}).items():
+            logger.info(f"        {split}: {count} 个孤儿标签")
+        for paths in det.get("orphan_examples", {}).values():
+            for path in paths[:5]:
+                logger.info(f"          {path}")
+
+    elif r.name == "empty_labels":
+        for split, count in det.get("empty_per_split", {}).items():
+            logger.info(f"        {split}: {count} 个空标签")
+        for paths in det.get("empty_examples", {}).values():
+            for path in paths[:5]:
+                logger.info(f"          {path}")
+
+    elif r.name == "image_integrity":
+        for error in det.get("errors_preview", [])[:5]:
+            logger.info(
+                f"        - {Path(error['image']).name}  {error['error']}"
+            )
+
+    elif r.name == "annotation_geometry":
+        kinds = det.get("error_kinds", {})
+        if kinds:
+            parts = ", ".join(f"{kind}={count}" for kind, count in kinds.items())
+            logger.info(f"        错误类型:  {parts}")
+        for error in det.get("errors_preview", [])[:5]:
+            logger.info(
+                f"        - {Path(error['label']).name}:{error['line_no']}  "
+                f"{error['kind']}  {error['detail']}"
+            )
+
+    elif r.name == "fingerprint_integrity":
+        changed_splits = det.get("changed_splits", [])
+        if changed_splits:
+            logger.info(f"        发生变化的 split: {', '.join(changed_splits)}")
+
     # 通用 fallback: 任何未匹配 well-known 分支的 check, 至少展示 reason
     else:
         if "reason" in det:
@@ -181,8 +219,17 @@ def _render_one_check_details(r: CheckResult, logger: logging.Logger) -> None:
 # 段 5: 报告尾
 # ============================================================
 
-def _render_footer(report_path: Optional[Path], logger: logging.Logger) -> None:
+def _render_footer(
+    report_path: Optional[Path],
+    issues_csv_path: Optional[Path],
+    html_report_path: Optional[Path],
+    logger: logging.Logger,
+) -> None:
     logger.info(H2_LINE)
     if report_path is not None:
-        logger.info(f"  详细报告:  {report_path}")
+        logger.info(f"  JSON 报告:  {report_path}")
+    if issues_csv_path is not None:
+        logger.info(f"  问题清单:  {issues_csv_path}")
+    if html_report_path is not None:
+        logger.info(f"  HTML 报告:  {html_report_path}")
     logger.info(H1_LINE)

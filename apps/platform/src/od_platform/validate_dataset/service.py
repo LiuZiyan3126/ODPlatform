@@ -20,6 +20,11 @@ from pathlib import Path
 from datetime import datetime, timezone
 from od_platform.common.paths import  validation_run_dir
 from od_platform.common.system_utils import log_device_info
+from od_platform.validate_dataset.artifacts import (
+    collect_issue_records,
+    write_html_report,
+    write_issues_csv,
+)
 from od_platform.validate_dataset.report import ValidationReport
 from od_platform.validate_dataset.snapshot import  build_snapshot
 
@@ -88,10 +93,10 @@ def validate_dataset(
         task_type:    'detect' / 'segment' / None (None → 读 yaml.task, 再不行 detect)
         run_id:       手动指定运行 ID; None 表示自动用时间戳
         run_dir:      手动指定运行目录; None 表示用 validation_run_dir(run_id)
-        write_report: 是否写 JSON 报告到 run_dir/report.json
+        write_report: 是否写 JSON、CSV 和 HTML 报告到 run_dir
 
     Returns:
-        ValidationReport (run_dir 字段已填, 调用方可以拿 .report_path 取 JSON 位置)
+        ValidationReport（可通过三个 path 属性取得报告产物位置）
     """
     # ---- 解析 run_id / run_dir ----
     resolved_run_id  = run_id  or datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -122,12 +127,20 @@ def validate_dataset(
         run_dir=resolved_run_dir,
     )
 
-    # ---- 写 JSON 报告 ----
+    # ---- 写 JSON + 问题 CSV + HTML 报告 ----
     if write_report and resolved_run_dir is not None:
-        report_path = resolved_run_dir / "report.json"
-        report_path.write_text(
+        issue_records = collect_issue_records(report.results)
+        report.report_path.write_text(
             json.dumps(report.to_dict(), indent=2, ensure_ascii=False),
             encoding="utf-8",
+        )
+        write_issues_csv(issue_records, report.issues_csv_path)
+        write_html_report(report, issue_records, report.html_report_path)
+        logger.info(
+            "质检报告已生成: JSON=%s, CSV=%s, HTML=%s",
+            report.report_path,
+            report.issues_csv_path,
+            report.html_report_path,
         )
 
     return report

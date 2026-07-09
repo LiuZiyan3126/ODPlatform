@@ -58,7 +58,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--no-report",
         action="store_true",
-        help="不写 JSON 报告 (只跑验证, 看日志即可)",
+        help="不写 JSON、CSV 和 HTML 报告 (只跑验证, 看日志即可)",
     )
     parser.add_argument(
         "-v", "--verbose",
@@ -94,7 +94,13 @@ def main() -> int:
         )
 
         # ---- 渲染日志 ----
-        render_to_logger(report, logger, report_path=report.report_path)
+        render_to_logger(
+            report,
+            logger,
+            report_path=report.report_path,
+            issues_csv_path=report.issues_csv_path,
+            html_report_path=report.html_report_path,
+        )
 
         return report.exit_code
 

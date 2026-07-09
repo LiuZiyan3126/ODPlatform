@@ -17,6 +17,8 @@
     - exit_code:          0/1/2 — Unix 退出码语义
     - failed_results:     非 PASS 的 results 子集
     - report_path:        run_dir/report.json (run_dir 未设则 None)
+    - issues_csv_path:    run_dir/issues.csv
+    - html_report_path:   run_dir/report.html
 """
 from __future__ import annotations
 
@@ -96,6 +98,16 @@ class ValidationReport:
         """JSON 报告路径 — run_dir 未设时返回 None。"""
         return (self.run_dir / "report.json") if self.run_dir else None
 
+    @property
+    def issues_csv_path(self) -> Optional[Path]:
+        """逐问题 CSV 路径 — run_dir 未设时返回 None。"""
+        return (self.run_dir / "issues.csv") if self.run_dir else None
+
+    @property
+    def html_report_path(self) -> Optional[Path]:
+        """HTML 报告路径 — run_dir 未设时返回 None。"""
+        return (self.run_dir / "report.html") if self.run_dir else None
+
     # ---------- JSON 序列化 ----------
 
     def to_dict(self) -> Dict[str, Any]:
@@ -109,6 +121,15 @@ class ValidationReport:
             "overall_severity": self.overall_severity,
             "exit_code":        self.exit_code,
             "counts":           self.counts_by_severity,
+            "artifacts": {
+                "json": str(self.report_path) if self.report_path else None,
+                "issues_csv": (
+                    str(self.issues_csv_path) if self.issues_csv_path else None
+                ),
+                "html": (
+                    str(self.html_report_path) if self.html_report_path else None
+                ),
+            },
             "dataset_summary": {
                 "nc":          self.snapshot.nc,
                 "class_names": list(self.snapshot.class_names),

@@ -76,13 +76,13 @@ def validate_label_format(ctx: CheckContext) -> CheckResult:
                 if err is not None:
                     kind, detail = err
                     error_kinds[kind] += 1
-                    if len(errors) < ERRORS_PREVIEW_LIMIT:
-                        errors.append({
-                            "label":   str(lbl),
-                            "line_no": line_no,
-                            "kind":    kind,
-                            "detail":  detail,
-                        })
+                    errors.append({
+                        "split": split,
+                        "label": str(lbl),
+                        "line_no": line_no,
+                        "kind": kind,
+                        "detail": detail,
+                    })
 
     if not error_kinds:
         return CheckResult(
@@ -105,7 +105,8 @@ def validate_label_format(ctx: CheckContext) -> CheckResult:
             "total_lines":     total_lines,
             "total_errors":    total_errors,
             "error_kinds":     dict(error_kinds),
-            "errors_preview":  errors,
+            "errors":          errors,
+            "errors_preview":  errors[:ERRORS_PREVIEW_LIMIT],
         },
     )
 

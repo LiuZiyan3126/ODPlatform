@@ -5,11 +5,12 @@ from pathlib import Path
 from typing import List
 import yaml
 
+from od_platform.data_pipeline.split.fingerprint import build_dataset_fingerprint
 from od_platform.data_pipeline.split.manifest import SplitManifest
 
 logger = logging.getLogger(__name__)
 
-_SCHEMA_VERSION = 1  # 用于记录odp-meta的结构版本
+_SCHEMA_VERSION = 2  # 用于记录odp-meta的结构版本
 
 
 def write_dataset_yaml(
@@ -23,6 +24,7 @@ def write_dataset_yaml(
     task: str,
     ) -> None:
     yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    fingerprint = build_dataset_fingerprint(manifest, classes)
 
     doc = {
         "path": str(dataset_root),
@@ -36,6 +38,7 @@ def write_dataset_yaml(
             "dataset_name": dataset_name,
             "source_format": source_format,
             "task": task,
+            "fingerprint": fingerprint,
             "split": {
                 "strategy": manifest.strategy,
                 "random_state": manifest.random_state,

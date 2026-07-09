@@ -11,12 +11,46 @@ from __future__ import annotations
 import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import List
+from typing import List, Optional, Tuple
 
 from od_platform.common.constants import AnnotationFormat, Task
 from od_platform.data_pipeline.convert.registry import ConvertOptions, register
 
 logger = logging.getLogger(__name__)
+
+
+def _voc_box_to_yolo(
+    xmin: float,
+    ymin: float,
+    xmax: float,
+    ymax: float,
+    image_width: float,
+    image_height: float,
+) -> Optional[Tuple[float, float, float, float]]:
+    """把 VOC 的 1-based 边界转换为裁剪后的 YOLO 归一化坐标。
+
+    Pascal VOC 使用从 1 开始的像素坐标，因此先将四条边减 1，恢复为
+    0-based 坐标；Roboflow 等导出器可能把贴右/下边界写成 W+1/H+1，
+    转换后会自然落回 W/H。额外裁剪用于防御源标注的真实越界。
+    """
+    if image_width <= 0 or image_height <= 0:
+        raise ValueError(
+            f"图片尺寸必须大于 0，实际 width={image_width}, height={image_height}"
+        )
+
+    x1 = min(max(xmin - 1.0, 0.0), image_width)
+    y1 = min(max(ymin - 1.0, 0.0), image_height)
+    x2 = min(max(xmax - 1.0, 0.0), image_width)
+    y2 = min(max(ymax - 1.0, 0.0), image_height)
+    if x2 <= x1 or y2 <= y1:
+        return None
+
+    return (
+        (x1 + x2) / 2.0 / image_width,
+        (y1 + y2) / 2.0 / image_height,
+        (x2 - x1) / image_width,
+        (y2 - y1) / image_height,
+    )
 
 
 @register(AnnotationFormat.PASCAL_VOC, supported_tasks=(Task.DETECT,))
@@ -38,20 +72,28 @@ def convert_voc(input_dir: Path, out_labels_dir: Path, options: ConvertOptions) 
         lines: List[str] = []
         for obj in root.findall("object"):              # 一张图可能有多个框
             name = obj.findtext("name")
-            if name not in classes:
-                if discovering:
-                    classes.append(name)                # 探测模式:首次见到就登记
-                else:
-                    continue                            # 白名单模式:名单外的框跳过(删类)
-            cls_id = classes.index(name)                # 类名 → 数字编号(列表下标)
+            if not discovering and name not in classes:
+                continue                                # 白名单模式:名单外的框跳过(删类)
 
             b = obj.find("bndbox")
             xmin = float(b.findtext("xmin")); ymin = float(b.findtext("ymin"))
             xmax = float(b.findtext("xmax")); ymax = float(b.findtext("ymax"))
-            # 像素的左上/右下 → YOLO 的归一化中心点 + 宽高
-            cx = (xmin + xmax) / 2 / W
-            cy = (ymin + ymax) / 2 / H
-            lines.append(f"{cls_id} {cx:.6f} {cy:.6f} {(xmax-xmin)/W:.6f} {(ymax-ymin)/H:.6f}")
+            converted = _voc_box_to_yolo(xmin, ymin, xmax, ymax, W, H)
+            if converted is None:
+                logger.warning(
+                    "跳过裁剪后无有效面积的 VOC 框: file=%s, class=%s, "
+                    "bbox=(%s, %s, %s, %s)",
+                    xml_path.name, name, xmin, ymin, xmax, ymax,
+                )
+                continue
+
+            if name not in classes:
+                classes.append(name)                    # 探测模式:首次见到就登记
+            cls_id = classes.index(name)                # 类名 → 数字编号(列表下标)
+            cx, cy, width, height = converted
+            lines.append(
+                f"{cls_id} {cx:.6f} {cy:.6f} {width:.6f} {height:.6f}"
+            )
 
         # 没框也写一个空 .txt:下游靠"每张图都有同名标注文件"配对,缺了它纯背景图会被漏掉。
         (out_labels_dir / (xml_path.stem + ".txt")).write_text("\n".join(lines), encoding="utf-8")

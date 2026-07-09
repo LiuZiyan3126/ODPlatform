@@ -18,9 +18,7 @@ yaml_schema check: 验证数据集yaml文件的字段完整性和一致性
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Tuple
-import yaml  # pip install pyyaml
-from polars.expr import name
+from typing import List
 
 from od_platform.validate_dataset.registry import (check, CheckContext, CheckResult, CheckSeverity)
 

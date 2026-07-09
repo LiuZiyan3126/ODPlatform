@@ -99,9 +99,10 @@ def validate_pair_existence(ctx: CheckContext) -> CheckResult:
         "missing_per_split": {
             split: len(orphans) for split, orphans in orphan_per_split.items()
         },
+        "missing_files": orphan_per_split,
     }
 
-    # 详细清单截断 — 前 N 条供日志展开, 完整列表通过 JSON 报告查看
+    # 完整列表供 CSV/HTML 使用，preview 只供终端展示。
     if orphan_per_split:
         details["missing_examples"] = {
             split: orphans[:DETAILS_PREVIEW_LIMIT]
