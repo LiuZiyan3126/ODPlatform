@@ -1,4 +1,4 @@
-"""把结构化质检结果导出为问题 CSV 和自包含 HTML 报告。"""
+"""把结构化质检结果导出为问题 CSV、自包含 HTML 报告和 Word 报告。"""
 from __future__ import annotations
 
 import csv
@@ -404,3 +404,140 @@ def write_html_report(
 </main></body></html>"""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(document, encoding="utf-8")
+
+
+def write_docx_report(
+    report: ValidationReport,
+    records: list[IssueRecord],
+    path: Path,
+) -> None:
+    """生成 Word (.docx) 格式的质检报告。"""
+    from docx import Document
+    from docx.shared import Cm, Inches, Pt, RGBColor
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.enum.table import WD_TABLE_ALIGNMENT
+    from docx.oxml.ns import qn
+
+    doc = Document()
+
+    # 设置默认字体为宋体以支持中文
+    style = doc.styles["Normal"]
+    font = style.font
+    font.name = "宋体"
+    font.size = Pt(10.5)
+    style.element.rPr.rFonts.set(qn("w:eastAsia"), "宋体")
+
+    def _set_cell_font(cell, text: str, bold: bool = False, size: Pt | None = None):
+        cell.text = ""
+        p = cell.paragraphs[0]
+        run = p.add_run(text)
+        run.font.name = "宋体"
+        run._element.rPr.rFonts.set(qn("w:eastAsia"), "宋体")
+        run.bold = bold
+        if size:
+            run.font.size = size
+
+    # ---- 标题 ----
+    title = doc.add_heading("YOLO 数据集质检报告", level=0)
+    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+    subtitle = doc.add_paragraph()
+    subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = subtitle.add_run(
+        f"运行 {report.run_id}  |  总体级别 {report.overall_severity}  |  耗时 {report.duration_seconds:.3f}s"
+    )
+    run.font.size = Pt(10)
+    run.font.color.rgb = RGBColor(102, 102, 102)
+
+    doc.add_paragraph()
+
+    # ---- 概览卡片 ----
+    doc.add_heading("检测概览", level=1)
+    counts = report.counts_by_severity
+    overview_table = doc.add_table(rows=1, cols=4)
+    overview_table.style = "Light Grid Accent 1"
+    overview_table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    hdr = overview_table.rows[0].cells
+    severities = [CheckSeverity.PASS, CheckSeverity.INFO, CheckSeverity.WARNING, CheckSeverity.ERROR]
+    for i, sev in enumerate(severities):
+        _set_cell_font(hdr[i], f"{sev}: {counts.get(sev, 0)}", bold=True, size=Pt(11))
+    doc.add_paragraph()
+
+    # ---- 数据集信息 ----
+    doc.add_heading("数据集信息", level=1)
+    info_table = doc.add_table(rows=6, cols=2)
+    info_table.style = "Light Grid Accent 1"
+    info_data = [
+        ("YAML 路径", str(report.yaml_path)),
+        ("任务类型", report.snapshot.task_type),
+        ("类别数", str(report.snapshot.nc)),
+        ("类别", ", ".join(report.snapshot.class_names)),
+        ("开始时间", report.started_at_iso),
+        ("问题记录", f"{len(records)} 条"),
+    ]
+    for i, (k, v) in enumerate(info_data):
+        _set_cell_font(info_table.rows[i].cells[0], k, bold=True)
+        _set_cell_font(info_table.rows[i].cells[1], v)
+    doc.add_paragraph()
+
+    # ---- 数据集摘要 ----
+    doc.add_heading("数据集摘要", level=1)
+    split_headers = ["Split", "图片数", "有标注图片", "实例数"]
+    split_data = [
+        [split, str(stats.image_count), str(stats.annotated_count), str(stats.total_instances)]
+        for split, stats in report.snapshot.stats_per_split.items()
+    ]
+    split_table = doc.add_table(rows=1 + len(split_data), cols=4)
+    split_table.style = "Light Grid Accent 1"
+    for i, h in enumerate(split_headers):
+        _set_cell_font(split_table.rows[0].cells[i], h, bold=True)
+    for r, row_data in enumerate(split_data):
+        for c, val in enumerate(row_data):
+            _set_cell_font(split_table.rows[r + 1].cells[c], val)
+    doc.add_paragraph()
+
+    # ---- 检测项结果 ----
+    doc.add_heading("检测项结果", level=1)
+    check_headers = ["检测项", "级别", "摘要"]
+    check_table = doc.add_table(rows=1 + len(report.results), cols=3)
+    check_table.style = "Light Grid Accent 1"
+    for i, h in enumerate(check_headers):
+        _set_cell_font(check_table.rows[0].cells[i], h, bold=True)
+    for r, result in enumerate(report.results):
+        _set_cell_font(check_table.rows[r + 1].cells[0], result.name)
+        _set_cell_font(check_table.rows[r + 1].cells[1], result.severity)
+        _set_cell_font(check_table.rows[r + 1].cells[2], result.summary)
+    doc.add_paragraph()
+
+    # ---- 问题数据与修复建议 ----
+    doc.add_heading("问题数据与修复建议", level=1)
+    if records:
+        issue_headers = ["级别", "检测项", "Split", "文件", "行", "问题类型", "问题详情", "修复建议"]
+        issue_table = doc.add_table(rows=1 + len(records), cols=8)
+        issue_table.style = "Light Grid Accent 1"
+        for i, h in enumerate(issue_headers):
+            _set_cell_font(issue_table.rows[0].cells[i], h, bold=True, size=Pt(9))
+        for r, record in enumerate(records):
+            row_cells = issue_table.rows[r + 1].cells
+            _set_cell_font(row_cells[0], record.severity)
+            _set_cell_font(row_cells[1], record.check_name)
+            _set_cell_font(row_cells[2], record.split or "—")
+            _set_cell_font(row_cells[3], record.file or "—")
+            _set_cell_font(row_cells[4], record.line or "—")
+            _set_cell_font(row_cells[5], record.issue_type)
+            _set_cell_font(row_cells[6], record.detail)
+            _set_cell_font(row_cells[7], record.recommendation)
+    else:
+        p = doc.add_paragraph("没有发现需要记录的问题数据。")
+        p.runs[0].font.color.rgb = RGBColor(6, 118, 71)
+
+    doc.add_paragraph()
+
+    # ---- 原始产物链接 ----
+    doc.add_heading("原始产物", level=1)
+    doc.add_paragraph(f"JSON 报告: report.json", style="List Bullet")
+    doc.add_paragraph(f"问题 CSV: issues.csv", style="List Bullet")
+    doc.add_paragraph(f"HTML 报告: report.html", style="List Bullet")
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    doc.save(str(path))

@@ -39,12 +39,14 @@ def main(argv = None) -> int:
     p.add_argument("--train-rate", type=float, default=0.8)
     p.add_argument("--val-rate", type=float, default=0.1)
     p.add_argument("--seed", type=int, default=1210)
+    p.add_argument("--skip-if-exists", action="store_true",
+                   help="如果数据集已划分完成，跳过流水线不重复执行")
 
     a = p.parse_args(argv)
 
     pipe = DatasetPipeline(
         a.dataset, a.fmt, task=a.task, train_rate=a.train_rate, val_rate=a.val_rate, classes=a.classes, split_strategy=a.strategy,
-        random_state=a.seed, split_mode=a.split_mode,
+        random_state=a.seed, split_mode=a.split_mode, skip_if_exists=a.skip_if_exists,
     )
     try:
         res = pipe.run()

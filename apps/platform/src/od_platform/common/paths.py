@@ -54,6 +54,9 @@ UNIT_TEST_DIR: Path = APP_DIR / "tests"
 # 顶层的文档目录
 DOCS_DIR: Path = ROOT_DIR / "docs"
 
+# 备份目录
+BACKUPS_DIR: Path = ROOT_DIR / "backups"
+
 # 工程基础设置目录共享的
 SCRIPTS_DIR: Path = ROOT_DIR / "scripts"
 

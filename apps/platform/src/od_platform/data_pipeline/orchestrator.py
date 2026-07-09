@@ -41,6 +41,7 @@ class DatasetPipeline:
         classes: Optional[List[str]] = None, random_state: int = DEFAULT_RANDOM_STATE,
         split_strategy: str = DEFAULT_SPLIT_STRATEGY,
         split_mode: str = DEFAULT_SPLIT_MODE,
+        skip_if_exists: bool = False,
     ):
         self.annotation_format = annotation_format
         self.task = task
@@ -49,6 +50,7 @@ class DatasetPipeline:
         self.random_state = random_state
         self.split_strategy = split_strategy
         self.split_mode = split_mode
+        self.skip_if_exists = skip_if_exists
         self._options = ConvertOptions(task=task, classes=classes)
 
         # 名字或路径 → 具体目录;并据数据集名,提前算好"按数据集分桶"的落盘根与 yaml 路径。
@@ -61,11 +63,34 @@ class DatasetPipeline:
         self.yaml_out = paths.dataset_yaml_path(self.dataset_name)
 
     def run(self) -> Dict:
+        if self.skip_if_exists and self._already_split():
+            logger.info(
+                "数据集 %r 已划分，跳过流水线。YAML: %s，处理后数据: %s",
+                self.dataset_name, self.yaml_out, self.processed_root,
+            )
+            return {"skipped": True, "yaml": str(self.yaml_out)}
         if self.split_mode == SplitMode.PRESERVE:
             return self._run_preserve_split()
         if self.split_mode != SplitMode.RESPLIT:
             raise ValueError(f"未知 split_mode: {self.split_mode!r}")
         return self._run_resplit()
+
+    def _already_split(self) -> bool:
+        """检查数据集是否已经完成划分。
+
+        当以下条件同时满足时认为已划分:
+        1. YAML 配置文件存在
+        2. processed/<name>/ 下有 train/images 和 val/images 子目录且均包含文件
+        """
+        if not self.yaml_out.exists():
+            return False
+        train_dir = self.output_dirs.train_images
+        val_dir = self.output_dirs.val_images
+        if not train_dir.is_dir() or not val_dir.is_dir():
+            return False
+        has_train_files = any(train_dir.iterdir())
+        has_val_files = any(val_dir.iterdir())
+        return has_train_files and has_val_files
 
     def _run_resplit(self) -> Dict:
         logger.info("处理数据集 %r (format=%s, task=%s, split=%s)",

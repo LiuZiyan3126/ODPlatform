@@ -108,6 +108,11 @@ class ValidationReport:
         """HTML 报告路径 — run_dir 未设时返回 None。"""
         return (self.run_dir / "report.html") if self.run_dir else None
 
+    @property
+    def docx_report_path(self) -> Optional[Path]:
+        """Word 报告路径 — run_dir 未设时返回 None。"""
+        return (self.run_dir / "report.docx") if self.run_dir else None
+
     # ---------- JSON 序列化 ----------
 
     def to_dict(self) -> Dict[str, Any]:

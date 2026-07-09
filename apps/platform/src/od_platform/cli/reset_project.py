@@ -13,6 +13,8 @@ import os
 import shutil
 import stat
 import sys
+import zipfile
+from datetime import datetime
 from getpass import getpass
 from pathlib import Path
 import subprocess
@@ -23,6 +25,7 @@ from od_platform.common.paths import (
     META_LOGGING_DIR,
     RAW_DATA_DIR,
     PRETRAINED_MODELS_DIR,
+    BACKUPS_DIR,
     get_dirs_to_reset,
     is_protected,
 )
@@ -80,6 +83,40 @@ def _audit_context() -> dict:
         "argv": sys.argv,
         "cwd": os.getcwd()
     }
+
+
+def _create_backup(deletable: list[tuple[Path, int, int]]) -> Path | None:
+    """将待删除目录打包备份到 backups/ 目录。
+
+    Returns:
+        备份文件路径，无可备份内容时返回 None。
+    """
+    if not deletable:
+        return None
+
+    BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_path = BACKUPS_DIR / f"reset_backup_{timestamp}.zip"
+
+    total_files = sum(c for _, c, _ in deletable)
+    logger.info("正在创建备份: %s (%d 个文件)...", backup_path.name, total_files)
+
+    try:
+        with zipfile.ZipFile(backup_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            for dir_path, _, _ in deletable:
+                if not dir_path.exists():
+                    continue
+                for f in dir_path.rglob("*"):
+                    if f.is_file():
+                        arcname = str(f.relative_to(ROOT_DIR))
+                        zf.write(f, arcname)
+    except OSError as e:
+        logger.error("备份创建失败: %s", e)
+        return None
+
+    backup_size = _format_size(backup_path.stat().st_size)
+    logger.info("备份完成: %s (%s)", backup_path, backup_size)
+    return backup_path
 
 
 def _scan_targets() -> tuple[list[tuple[Path, int, int]], list[Path]]:
@@ -203,7 +240,7 @@ def _delete_one(path: Path, idx: int, total: int, file_count: int, size: int) ->
         return str(e)
 
 
-def _execute_delete(deletable: list[tuple[Path, int, int]]) -> None:
+def _execute_delete(deletable: list[tuple[Path, int, int]], backup_path: Path | None = None) -> None:
     total = len(deletable)
     success: list[Path] = []
     failed: list[tuple[Path, str]] = []
@@ -223,13 +260,17 @@ def _execute_delete(deletable: list[tuple[Path, int, int]]) -> None:
     else:
         logger.info(f"完成: 成功 {len(success)} 个,失败 0 个")
 
+    if backup_path and backup_path.exists():
+        logger.info(f"备份已保存至: {backup_path}")
 
-def reset_project(yes: bool = False, force: bool = False, dry_run: bool = False) -> int:
+
+def reset_project(yes: bool = False, force: bool = False, dry_run: bool = False, no_backup: bool = False) -> int:
     """
     Args:
-        yes:     --yes,显式同意删除
-        force:   --force,跳过交互式确认
-        dry_run: --dry-run,显式声明只打印不删除(默认行为也是这个)
+        yes:       --yes,显式同意删除
+        force:     --force,跳过交互式确认
+        dry_run:   --dry-run,显式声明只打印不删除(默认行为也是这个)
+        no_backup: --no-backup,跳过备份步骤
 
     --dry-run 与 --yes 互斥;同时给以 --dry-run 优先并警告。
     """
@@ -267,8 +308,16 @@ def reset_project(yes: bool = False, force: bool = False, dry_run: bool = False)
             return 1
 
     logger.info("")
+
+    backup_path: Path | None = None
+    if not no_backup:
+        logger.info("创建备份...".center(LINE_WIDTH, '='))
+        backup_path = _create_backup(deletable)
+    else:
+        logger.warning("已通过 --no-backup 跳过备份，直接删除。")
+
     logger.info("开始删除...".center(LINE_WIDTH, '='))
-    _execute_delete(deletable)
+    _execute_delete(deletable, backup_path)
     return 0
 
 
@@ -280,8 +329,9 @@ def main() -> int:
     parser.add_argument("--yes", action="store_true", help="真正执行删除(默认是 dry-run)")
     parser.add_argument("--force", action="store_true", help="跳过交互式确认(仅当 --yes 时有效)")
     parser.add_argument("--dry-run", action="store_true", help="显式声明 dry-run")
+    parser.add_argument("--no-backup", action="store_true", help="跳过备份步骤，直接删除")
     args = parser.parse_args()
-    return reset_project(yes=args.yes, force=args.force, dry_run=args.dry_run)
+    return reset_project(yes=args.yes, force=args.force, dry_run=args.dry_run, no_backup=args.no_backup)
 
 
 if __name__ == "__main__":

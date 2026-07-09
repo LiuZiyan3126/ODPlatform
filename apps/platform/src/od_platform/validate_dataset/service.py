@@ -22,6 +22,7 @@ from od_platform.common.paths import  validation_run_dir
 from od_platform.common.system_utils import log_device_info
 from od_platform.validate_dataset.artifacts import (
     collect_issue_records,
+    write_docx_report,
     write_html_report,
     write_issues_csv,
 )
@@ -136,11 +137,13 @@ def validate_dataset(
         )
         write_issues_csv(issue_records, report.issues_csv_path)
         write_html_report(report, issue_records, report.html_report_path)
+        write_docx_report(report, issue_records, report.docx_report_path)
         logger.info(
-            "质检报告已生成: JSON=%s, CSV=%s, HTML=%s",
+            "质检报告已生成: JSON=%s, CSV=%s, HTML=%s, DOCX=%s",
             report.report_path,
             report.issues_csv_path,
             report.html_report_path,
+            report.docx_report_path,
         )
 
     return report
