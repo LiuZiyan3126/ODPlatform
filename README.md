@@ -1,14 +1,6 @@
 # ODPlatform — 目标检测开发平台
 
-基于 YOLO 的火情检测教学平台，提供数据处理、验证、训练、评估、推理的完整机器学习工作流，支持 CLI 和桌面 GUI 两种使用方式。
-
-## 团队
-
-| 成员 | 负责模块 |
-|------|---------|
-| 本项目 (主体) | 核心架构 (D1-D8) + 桌面端 (PySide6) + 推理系统 + 帧源 |
-| 成员1 | 训练报告系统 + 模型评估系统 (ValService + 多模型对比) |
-| 成员4 | 数据流水线扩展 (preserve/策略/指纹) + 质检扩展 (9项+报告) + Pascal VOC 修正 |
+基于 YOLO 的目标检测教学平台，提供数据处理、验证、训练、评估、推理的完整机器学习工作流，支持 CLI 和桌面 GUI 两种使用方式。
 
 ## 快速开始
 
@@ -190,9 +182,6 @@ ODPlatform/
 | 模型 | 路径 | 说明 |
 |------|------|------|
 | yolo11n | `models/pretrained/yolo11n.pt` | COCO 80 类预训练 |
-| fire-best | `models/trained/train-4-20260707-233005-yolo11n-best.pt` | 火灾检测 (mAP@50=0.689, AdamW/10ep) |
-| fire-best ONNX | `models/trained/...-best.onnx` | ONNX 导出 |
-| fire-best FP16 | `models/trained/...-best.fp16.onnx` | FP16 ONNX 导出 |
-| fire-best TensorRT | `models/trained/...-best.engine` | TensorRT 引擎 |
+| fire-best | `models/trained/train-4-20260707-233005-yolo11n-best.pt` | 火灾检测训练产物 |
 
 > 模型权重文件不进入 Git，需自行下载或训练生成。
