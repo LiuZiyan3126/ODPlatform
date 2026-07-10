@@ -20,44 +20,6 @@ pip install -e apps/platform
 pip install -e apps/desktop
 ```
 
-## CLI 命令一览
-
-### 项目管理
-
-| 命令 | 功能 |
-|------|------|
-| `odp-init` | 初始化项目目录结构 |
-| `odp-reset` | 重置项目（清除运行时产物，支持 dry-run、备份） |
-
-### 数据工程
-
-| 命令 | 功能 |
-|------|------|
-| `odp-transform` | 数据集格式转换 + 划分（resplit / preserve 模式） |
-| `odp-validate` | 数据集质量验证（9 项检查，退出码 0/1/2） |
-| `odp-gen-config` | 生成训练 / 验证 / 推理 YAML 配置模板 |
-
-### 模型训练与评估
-
-| 命令 | 功能 |
-|------|------|
-| `odp-train` | 训练 YOLO 模型（自动生成训练报告） |
-| `odp-eval` | 单模型评估（支持 test / val / train 分片） |
-| `odp-compare` | 多模型对比（并列指标 + 终端彩色表格） |
-
-### 推理与终端
-
-| 命令 | 功能 |
-|------|------|
-| `odp-infer` | 模型推理（支持摄像头 / 视频 / 图片 / 图片文件夹） |
-| `od-desktop` | 启动桌面 GUI（6 Tab 全覆盖） |
-
-### 报告系统
-
-| 命令 | 功能 |
-|------|------|
-| `odp-reports` | 统一报告查询与导出 |
-
 ## 完整工作流示例
 
 ```bash
@@ -83,7 +45,7 @@ odp-train --epochs 1 --batch 16 --device 0 --model yolo11n.pt --data fire.yaml -
 
 # 6. 模型评估
 odp-eval --model train-4-20260707-233005-yolo11n-best.pt --yaml val.yaml --data fire.yaml
-odp-compare --models train-4-20260707-233005-yolo11n-best.pt train-20260708-224717-yolo11n-best.pt --yaml val.yaml --data fire.yaml   # 多模型对比
+odp-compare --models train-4-20260707-233005-yolo11n-best.pt train-20260710-095007-yolo11n-best.pt --yaml val.yaml --data fire.yaml   # 多模型对比
 
 # 7. 模型推理
 odp-infer --source fire.mp4 --batch 1 --warmup 30 --show --model train-4-20260707-233005-yolo11n-best.pt --pipeline-yaml infer_pipeline.yaml --yaml infer.yaml --no-save

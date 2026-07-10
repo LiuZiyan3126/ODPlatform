@@ -14,8 +14,8 @@ from od_platform.frame_source import create_frame_source, CameraConfig
 from od_platform.visualization import BeautifyVisualizer, Detection
 
 # ── 模型 & 输入源 ──────────────────────────────────────────
-MODEL_PATH = "train-4-20260707-233005-yolo11n-best.engine"
-SOURCE = "fire.mp4"
+MODEL_PATH = r"apps\platform\src\od_platform\tests\模型推理测试\train-4-20260707-233005-yolo11n-best.pt"
+SOURCE = "0"
 WINDOW_NAME = "美化推理"
 DISPLAY_MAX_WIDTH = 1280
 DISPLAY_MAX_HEIGHT = 720

@@ -1,0 +1,1070 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>基于YOLO的火情检测系统 - 中文答辩</title>
+  <style>
+    :root {
+      --bg: #f7f4ef;
+      --paper: #fffdf8;
+      --ink: #24201c;
+      --muted: #70685f;
+      --line: #e5dbce;
+      --red: #bc2d1a;
+      --orange: #ec7a1f;
+      --gold: #f5b642;
+      --green: #1f7a55;
+      --blue: #265f8f;
+      --shadow: 0 18px 50px rgba(66, 35, 18, 0.13);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(236, 122, 31, 0.18), transparent 34rem),
+        linear-gradient(180deg, #fbf8f2 0%, var(--bg) 42%, #f1ece4 100%);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif;
+      line-height: 1.72;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 28px 18px;
+      background: rgba(255, 253, 248, 0.86);
+      border-right: 1px solid var(--line);
+      backdrop-filter: blur(14px);
+      overflow-y: auto;
+    }
+
+    .brand {
+      display: grid;
+      gap: 8px;
+      padding: 12px 10px 22px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand strong {
+      font-size: 22px;
+      line-height: 1.25;
+    }
+
+    .brand span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    nav {
+      display: grid;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    nav a {
+      padding: 11px 12px;
+      border-radius: 8px;
+      color: #4b423a;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    nav a:hover {
+      background: #f2e8dc;
+      color: var(--red);
+    }
+
+    .side-note {
+      margin-top: 24px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff8ed;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    main {
+      padding: 0 36px 80px;
+      min-width: 0;
+    }
+
+    .hero {
+      min-height: 92vh;
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.95fr);
+      align-items: center;
+      gap: 42px;
+      padding: 52px 0 42px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border: 1px solid #f1c37a;
+      border-radius: 999px;
+      background: #fff4df;
+      color: #8b3a19;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      margin-top: 18px;
+      font-size: clamp(42px, 6vw, 78px);
+      max-width: 860px;
+    }
+
+    h2 {
+      font-size: clamp(28px, 3.8vw, 46px);
+      margin-bottom: 18px;
+    }
+
+    h3 {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    .lead {
+      margin-top: 18px;
+      max-width: 780px;
+      color: #4f4841;
+      font-size: 19px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 30px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--ink);
+      font-weight: 800;
+      box-shadow: 0 8px 20px rgba(57, 33, 20, 0.08);
+    }
+
+    .btn.primary {
+      border-color: #a52514;
+      background: #b8301d;
+      color: #fff;
+    }
+
+    .hero-visual {
+      position: relative;
+      overflow: hidden;
+      border-radius: 8px;
+      border: 1px solid #402414;
+      min-height: 520px;
+      box-shadow: var(--shadow);
+      background: #140b07;
+    }
+
+    .hero-visual img {
+      width: 100%;
+      height: 100%;
+      min-height: 520px;
+      object-fit: cover;
+      display: block;
+      filter: contrast(1.05) saturate(1.08);
+    }
+
+    .detect-box {
+      position: absolute;
+      border: 3px solid #ffe066;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+    }
+
+    .detect-box span {
+      position: absolute;
+      top: -32px;
+      left: -3px;
+      padding: 4px 8px;
+      border-radius: 4px 4px 4px 0;
+      background: #ffe066;
+      color: #2d180b;
+      font-weight: 900;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .b1 { left: 9%; top: 36%; width: 27%; height: 19%; }
+    .b2 { left: 39%; top: 18%; width: 20%; height: 31%; }
+    .b3 { left: 74%; top: 34%; width: 17%; height: 18%; }
+
+    .hero-caption {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .caption-item {
+      padding: 12px;
+      border-radius: 8px;
+      background: rgba(255, 250, 240, 0.92);
+      color: #29160c;
+    }
+
+    .caption-item strong {
+      display: block;
+      font-size: 20px;
+      line-height: 1.1;
+    }
+
+    .caption-item span {
+      display: block;
+      margin-top: 4px;
+      color: #6a4e3d;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    section {
+      padding: 74px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 28px;
+      margin-bottom: 26px;
+    }
+
+    .section-head p {
+      max-width: 720px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .grid.cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid.cols-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid.cols-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .card {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 253, 248, 0.9);
+      box-shadow: 0 10px 28px rgba(73, 48, 28, 0.08);
+    }
+
+    .card p,
+    .card li {
+      color: #5d554d;
+      font-size: 15px;
+    }
+
+    .metric {
+      padding: 20px;
+      border-radius: 8px;
+      color: #fff;
+      background: linear-gradient(135deg, #ac2a19, #ef8424);
+      min-height: 130px;
+    }
+
+    .metric:nth-child(2) {
+      background: linear-gradient(135deg, #225f8c, #38a1a6);
+    }
+
+    .metric:nth-child(3) {
+      background: linear-gradient(135deg, #1f7a55, #79a847);
+    }
+
+    .metric:nth-child(4) {
+      background: linear-gradient(135deg, #66351d, #d88a27);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 32px;
+      line-height: 1.1;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 8px;
+      color: rgba(255, 255, 255, 0.88);
+      font-weight: 700;
+    }
+
+    .team-card {
+      position: relative;
+      min-height: 250px;
+      overflow: hidden;
+    }
+
+    .team-card::before {
+      content: attr(data-index);
+      position: absolute;
+      right: 14px;
+      top: 4px;
+      color: rgba(188, 45, 26, 0.08);
+      font-size: 96px;
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: #f3eadc;
+      color: #76503a;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    ul.clean {
+      margin: 14px 0 0;
+      padding-left: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 8px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f1e6d7;
+      color: #513321;
+      font-weight: 900;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    pre {
+      margin: 14px 0 0;
+      padding: 14px;
+      overflow-x: auto;
+      border: 1px solid #ead7c0;
+      border-radius: 8px;
+      background: #221814;
+      color: #fff3df;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    code {
+      font-family: Consolas, "Courier New", monospace;
+    }
+
+    .showcase {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .preview {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: 0 12px 28px rgba(61, 42, 26, 0.1);
+    }
+
+    .preview img {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      object-fit: cover;
+      display: block;
+      background: #1b120d;
+    }
+
+    .preview iframe {
+      display: block;
+      width: 100%;
+      height: 360px;
+      border: 0;
+      background: #fff;
+    }
+
+    .preview-body {
+      padding: 16px;
+    }
+
+    .preview-body p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .flow {
+      display: grid;
+      gap: 12px;
+      counter-reset: step;
+    }
+
+    .flow-item {
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 253, 248, 0.9);
+    }
+
+    .flow-item::before {
+      counter-increment: step;
+      content: counter(step);
+      display: grid;
+      place-items: center;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: #b8301d;
+      color: #fff;
+      font-weight: 900;
+      font-size: 20px;
+    }
+
+    .flow-item p {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .timeline div {
+      padding: 14px;
+      min-height: 128px;
+      border-radius: 8px;
+      background: #fffaf1;
+      border: 1px solid var(--line);
+      color: #5b5047;
+      font-size: 14px;
+    }
+
+    .timeline strong {
+      display: block;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+
+    .pros-cons {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .pros-cons .card:first-child {
+      border-top: 5px solid var(--green);
+    }
+
+    .pros-cons .card:last-child {
+      border-top: 5px solid var(--orange);
+    }
+
+    .doc-links {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .doc-links a {
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffaf2;
+      color: #6a3c20;
+      font-size: 13px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .footer {
+      padding: 34px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 1100px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      aside {
+        position: static;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      nav {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      main {
+        padding: 0 22px 60px;
+      }
+
+      .hero,
+      .showcase,
+      .grid.cols-2,
+      .grid.cols-3,
+      .grid.cols-4,
+      .pros-cons {
+        grid-template-columns: 1fr;
+      }
+
+      .timeline {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 680px) {
+      nav {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      main {
+        padding: 0 14px 42px;
+      }
+
+      .hero {
+        min-height: auto;
+        padding-top: 34px;
+      }
+
+      .hero-visual,
+      .hero-visual img {
+        min-height: 420px;
+      }
+
+      .hero-caption {
+        grid-template-columns: 1fr;
+      }
+
+      .section-head {
+        display: block;
+      }
+
+      .timeline {
+        grid-template-columns: 1fr;
+      }
+
+      .doc-links {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="brand">
+        <strong>火情检测系统答辩</strong>
+        <span>基于 YOLO 的目标检测平台</span>
+      </div>
+      <nav aria-label="答辩导航">
+        <a href="#intro">一、项目简介</a>
+        <a href="#team">二、团队简介</a>
+        <a href="#dataset">三、数据集介绍</a>
+        <a href="#implementation">四、项目实现路线</a>
+        <a href="#extension">五、项目扩展</a>
+        <a href="#showcase">六、产品展示</a>
+        <a href="#summary">七、项目总结</a>
+      </nav>
+      <div class="side-note">
+        本页综合 docs 目录下的数据流水线、训练评估、报告、桌面端与项目扩展文档编写。
+      </div>
+    </aside>
+
+    <main>
+      <header class="hero">
+        <div>
+          <span class="eyebrow">YOLO · Fire Detection · ODPlatform</span>
+          <h1>基于YOLO的火情检测系统</h1>
+          <p class="lead">
+            面向火灾早期发现、现场安全巡检和边缘端实时预警的目标检测系统。项目以 YOLO 为核心模型，
+            围绕“数据处理、质量检查、配置管理、训练评估、推理部署、报告生成、桌面 GUI”构建完整开发闭环。
+          </p>
+          <div class="hero-actions">
+            <a class="btn primary" href="#dataset">查看数据集</a>
+            <a class="btn" href="项目扩展项.md">扩展项来源文档</a>
+            <a class="btn" href="../runs/data_validation/20260710_094706/report.html">质检报告</a>
+          </div>
+        </div>
+        <div class="hero-visual" aria-label="火情检测样例">
+          <img src="../data/processed/fire/test/images/fire-2219-_jpg.rf.0375d86bdcadc756b6afbc3a3d46010d.jpg" alt="火情检测样例图片">
+          <div class="detect-box b1"><span>fire 0.91</span></div>
+          <div class="detect-box b2"><span>fire 0.88</span></div>
+          <div class="detect-box b3"><span>fire 0.86</span></div>
+          <div class="hero-caption">
+            <div class="caption-item"><strong>3774</strong><span>处理后图片总量</span></div>
+            <div class="caption-item"><strong>5210</strong><span>有效目标标注</span></div>
+            <div class="caption-item"><strong>2 类</strong><span>fire / human-fire</span></div>
+          </div>
+        </div>
+      </header>
+
+      <section id="intro">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">01 Project</span>
+            <h2>项目简介</h2>
+          </div>
+        </div>
+        <div class="grid cols-3" style="margin-top:18px">
+          <div class="card">
+            <h3>项目背景</h3>
+            <p>火灾具有突发性强、扩散速度快、人工巡检成本高等特点，传统人工监控难以及时发现早期火情，需要自动化视觉检测手段辅助预警。</p>
+          </div>
+          <div class="card">
+            <h3>核心用途</h3>
+            <p>系统用于识别图像、视频或摄像头画面中的火焰与涉火人员目标，可应用于园区安防、实验室值守、现场巡检和边缘端火情预警。</p>
+          </div>
+          <div class="card">
+            <h3>技术路线</h3>
+            <p>以 YOLO 目标检测模型为核心，配套数据处理、数据质检、配置管理、模型训练、模型评估、模型推理、报告输出和 PySide6 桌面端。</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="team">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">02 Team</span>
+            <h2>团队简介</h2>
+          </div>
+          <p>
+            团队共四人，依据《项目扩展项.md》的模块顺序进行分工：数据工程、模型训练、推理与终端、基础工具与质检报告 docx 输出。
+          </p>
+        </div>
+        <div class="grid cols-4">
+          <div class="card team-card" data-index="01">
+            <span class="tag">赵浦轩</span>
+            <h3>数据工程</h3>
+            <p>负责 data_pipeline 与质检系统扩展，完成数据保留划分、划分策略、数据指纹、质量检查和报告落盘。</p>
+            <ul class="clean">
+              <li>resplit / preserve 双流程</li>
+              <li>stratified、multilabel、hash 策略</li>
+              <li>数据指纹与 YAML 元数据</li>
+            </ul>
+          </div>
+          <div class="card team-card" data-index="02">
+            <span class="tag">罗圣杰</span>
+            <h3>模型训练</h3>
+            <p>负责训练系统与模型评估系统，形成训练报告、test 分片评估、最新模型对比和指标归档。</p>
+            <ul class="clean">
+              <li>训练审计与 HTML/Markdown 报告</li>
+              <li>最新模型 test 评估</li>
+              <li>本项目模型横向对比</li>
+            </ul>
+          </div>
+          <div class="card team-card" data-index="03">
+            <span class="tag">刘子彦</span>
+            <h3>推理与终端</h3>
+            <p>负责客户端与推理终端，把平台能力封装成可交互的桌面应用，并接入图片、视频、摄像头等输入源。</p>
+            <ul class="clean">
+              <li>PySide6 单窗口多页客户端</li>
+              <li>配置表单与 YAML 双模式编辑</li>
+              <li>帧源捕获自动注册</li>
+            </ul>
+          </div>
+          <div class="card team-card" data-index="04">
+            <span class="tag">顾思豪</span>
+            <h3>基础工具与质检报告 docx 输出</h3>
+            <p>负责重置工具安全扩展和质检报告格式扩展，让项目重置可回滚、质检结果可用 Word 交付和归档。</p>
+            <ul class="clean">
+              <li>项目重置前 zip 打包备份</li>
+              <li>质检 report.docx 自动生成</li>
+              <li>报告产物路径写入 JSON</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="dataset">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">03 Dataset</span>
+            <h2>数据集介绍</h2>
+          </div>
+          <p>
+            本项目使用 fire 数据集，任务类型为 detect，类别为 fire 与 human-fire。数据由原始火灾图像和标注转换到平台统一的 YOLO 数据结构，并通过质检报告确认可用于训练和评估。
+          </p>
+        </div>
+        <div class="grid cols-4">
+          <div class="metric"><strong>3774</strong><span>图片总数，来自 processed/fire</span></div>
+          <div class="metric"><strong>5210</strong><span>有效目标标注，几何检查全部通过</span></div>
+          <div class="metric"><strong>2</strong><span>类别数量：fire、human-fire</span></div>
+          <div class="metric"><strong>preserve</strong><span>保留原始 train / val / test 划分</span></div>
+        </div>
+        <div class="grid cols-2" style="margin-top:18px">
+          <div class="preview">
+            <img src="../data/processed/fire/test/images/fire-2219-_jpg.rf.0375d86bdcadc756b6afbc3a3d46010d.jpg" alt="火情数据样例">
+            <div class="preview-body">
+              <h3>数据内容</h3>
+              <p>数据集中包含火焰画面、火场场景和涉火人员目标，主要服务于火灾监控、火情识别与安全巡检场景。</p>
+            </div>
+          </div>
+          <div class="card">
+            <h3>划分情况</h3>
+            <table>
+              <thead>
+                <tr><th>Split</th><th>图片数</th><th>有标注图片</th><th>实例数</th><th>比例</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>train</td><td>3298</td><td>3103</td><td>4518</td><td>87.39%</td></tr>
+                <tr><td>val</td><td>344</td><td>344</td><td>503</td><td>9.11%</td></tr>
+                <tr><td>test</td><td>132</td><td>132</td><td>189</td><td>3.50%</td></tr>
+              </tbody>
+            </table>
+            <div class="doc-links">
+              <a href="../apps/platform/configs/datasets/fire.yaml">含数据指纹的 fire.yaml</a>
+              <a href="../runs/data_validation/20260710_094706/report.html">最新数据质检报告</a>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:18px">
+          <h3>数据版本指纹</h3>
+          <p>
+            YAML 中记录了 SHA-256 数据指纹，覆盖类别顺序、split 归属、图片/标签文件名以及文件内容。当前总指纹为：
+            <code>c800dc2d3275443e2127626cd3adef8da7db0d6fa2a67693723e1b4690ec9583</code>。
+          </p>
+        </div>
+      </section>
+
+      <section id="implementation">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">04 Route</span>
+            <h2>项目实现路线</h2>
+          </div>
+          <p>
+            项目整体按照“数据流水线 → 数据质检 → 训练配置与模型训练 → 模型评估与对比分析 → 推理应用与客户端集成”的顺序实现，形成从原始数据到可展示产品的完整闭环。
+          </p>
+        </div>
+
+        <div class="flow">
+          <div class="flow-item">
+            <div>
+              <h3>数据流水线</h3>
+              <p>项目首先通过 `odp-transform` 处理 fire 原始数据集：读取 `data/raw/fire`，将 Pascal VOC 等原始标注统一转换为 YOLO 标签格式。流水线支持 `preserve` 模式保留原始 train / val / test 划分，也支持重新划分、分层划分和稳定哈希划分。最终输出标准目录 `data/processed/fire` 与训练入口 `apps/platform/configs/datasets/fire.yaml`，并在 YAML 中写入类别表、划分数量、划分策略和 SHA-256 数据指纹，保证后续训练能明确知道“用的是哪一份数据”。</p>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div>
+              <h3>数据质检</h3>
+              <p>数据集生成后，通过 `odp-validate` 对 `fire.yaml` 执行训练前质检。系统会检查 YAML 字段一致性、图像与标签是否成对、标签行格式、标注框几何合法性、图片完整性、孤儿标签、空标签、split 重复以及数据指纹一致性。质检结果不会修改数据，只输出报告包：`report.html` 用于展示，`issues.csv` 用于逐条整改，`report.docx` 用于归档交付，`report.json` 用于程序化读取。</p>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div>
+              <h3>训练配置与模型训练</h3>
+              <p>数据通过质检后，训练模块读取运行时配置和数据集 YAML，基于 `yolo11n.pt` 启动火情检测模型训练。训练过程记录训练人、开始/结束时间、运行环境、模型结构、输入尺寸、batch、epoch、优化器、学习率等关键参数，并保存最佳权重、最后权重、训练日志和审计快照。训练结束后自动生成训练报告，说明“谁在什么数据上训练了什么模型，训练结果如何”。</p>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div>
+              <h3>模型评估与对比分析</h3>
+              <p>训练完成后，评估模块使用 test 分片对模型进行独立评估，输出 Precision、Recall、mAP@50、mAP@50-95、Fitness 和逐类 mAP 等指标，同时保存 PR 曲线、F1 曲线、混淆矩阵、归一化混淆矩阵和预测样例图。对于多个候选模型，`odp-compare` 会在同一数据集、同一 test 分片上横向比较指标，帮助选择更适合展示和部署的模型，例如当前展示重点是 `train-4-20260707-233005-yolo11n-best.pt`。</p>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div>
+              <h3>推理应用与客户端集成</h3>
+              <p>最终将训练好的模型接入推理系统，支持图片、图片文件夹、视频文件和摄像头等输入源。推理模块负责加载模型、读取帧源、执行 YOLO 检测、渲染检测框、统计 FPS / 帧数 / 检测数 / 耗时，并生成推理审计记录。桌面客户端基于 PySide6 实现单窗口多页应用，将项目初始化、数据流水线、数据质检、配置编辑、模型训练和模型推理整合到可操作界面中，使系统从命令行工具扩展为可演示、可交互的火情检测平台。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="extension">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">05 Extension</span>
+            <h2>项目扩展</h2>
+          </div>
+          <p>
+            扩展内容严格围绕《项目扩展项.md》展开，并结合 docs 中的实施说明完成模块化介绍。
+          </p>
+        </div>
+
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>数据工程：流水线与质检</h3>
+            <p>数据转换支持 preserve 保留原始 train/valid/test 划分，也支持 resplit 重新划分；新增 stratified、stratified_multilabel、hash 三种策略。划分完成后在 YAML 中写入 SHA-256 数据指纹，保证训练数据可追溯。</p>
+            <ul class="clean">
+              <li>新增 orphan_labels、empty_labels、image_integrity、annotation_geometry、fingerprint_integrity 等检查项。</li>
+              <li>新增 --skip-if-exists，已经处理过的数据集可直接跳过，避免重复转换。</li>
+              <li>Pascal VOC 坐标转换修正后，5210 个标注几何形状全部合法。</li>
+            </ul>
+            <pre><code>odp-transform --dataset fire --format pascal_voc --split-mode preserve --skip-if-exists
+odp-validate --data apps/platform/configs/datasets/fire.yaml</code></pre>
+            <div class="doc-links">
+              <a href="../runs/data_validation/20260710_094706/report.html">输出报告：report.html</a>
+              <a href="../runs/data_validation/20260710_094706/issues.csv">问题清单：issues.csv</a>
+            </div>
+          </div>
+          <div class="card">
+            <h3>模型训练：报告与评估</h3>
+            <p>训练报告回答“谁、什么时间、在哪份数据上、数据质量如何、训练了什么、结果如何”。最新训练模型为 train-20260710-095007-yolo11n-best，评估系统在 test 分片上输出 Precision、Recall、mAP@50、mAP@50-95，并与项目内已有模型进行对比。</p>
+            <ul class="clean">
+              <li>最新训练报告：mAP@50 为 0.4143，mAP@50-95 为 0.1883。</li>
+              <li>最新评估报告：mAP@50 为 0.4684，Recall 为 0.5408。</li>
+              <li>最新对比报告用于说明当前模型与项目历史模型的差异。</li>
+            </ul>
+            <pre><code>odp-train --model yolo11n.pt --data fire.yaml --epochs 1 --author zpx
+odp-eval --model train-20260710-095007-yolo11n-best.pt --data fire.yaml --split test
+odp-compare --models train-4-20260707-233005-yolo11n-best.pt train-20260710-095007-yolo11n-best.pt --data fire.yaml</code></pre>
+            <div class="doc-links">
+              <a href="../runs/detect_train/train/report.html">输出报告：训练 report.html</a>
+              <a href="../runs/eval/val-6/report.html">输出报告：评估 report.html</a>
+              <a href="../runs/compare/compare_20260710_095846/report.md">输出报告：对比 report.md</a>
+            </div>
+          </div>
+          <div class="card">
+            <h3>推理与终端：帧源和桌面端</h3>
+            <p>客户端使用 PySide6 实现单窗口 QTabWidget，把平台核心流程做成可交互页面：项目初始化/重置、数据流水线、数据质检、配置编辑、模型训练、模型推理。长任务通过 QThread 与信号槽运行，日志和进度实时回传到界面。</p>
+            <ul class="clean">
+              <li>配置编辑器支持表单模式与 YAML 模式双向同步。</li>
+              <li>训练页面解析日志展示 epoch、loss 和进度。</li>
+              <li>推理页面支持摄像头、视频、图片、文件夹，并展示 FPS、帧数、检测数和耗时。</li>
+              <li>帧源捕获模块采用注册表与自动注册机制，新增输入源时无需修改调度主流程。</li>
+            </ul>
+            <pre><code>python -m od_desktop.app
+odp-infer --source path/to/image.jpg --model train-20260710-095007-yolo11n-best.pt --imgsz 640</code></pre>
+            <div class="doc-links">
+              <a href="桌面端扩展实施计划.md">桌面端实施计划</a>
+              <a href="../apps/desktop/src/od_desktop/main_window.py">客户端主窗口代码</a>
+            </div>
+          </div>
+          <div class="card">
+            <h3>重置工具与报告输出</h3>
+            <p>重置工具从“直接删除”扩展为“先备份、再删除”，在执行清理前把核心目录打包成 zip，降低误操作风险。数据质检报告从 JSON、CSV、HTML 扩展到 Word docx，便于答辩、归档和二次编辑。</p>
+            <ul class="clean">
+              <li>odp-reset 默认执行 dry-run，真正删除前可生成 backups/reset_backup_时间戳.zip。</li>
+              <li>odp-validate 自动输出 report.docx，并在报告包中保留 JSON、CSV、HTML。</li>
+              <li>docx 报告包含检测概览、数据集信息、split 摘要、检查项结果和问题修复建议。</li>
+            </ul>
+            <pre><code>odp-reset --yes
+odp-reset --yes --no-backup
+odp-validate --data apps/platform/configs/datasets/fire.yaml</code></pre>
+            <div class="doc-links">
+              <a href="../runs/data_validation/20260710_094706/report.docx">输出报告：report.docx</a>
+              <a href="重置、报告扩展.md">重置与报告扩展说明</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="showcase">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">06 Product</span>
+            <h2>产品展示</h2>
+          </div>
+          <p>
+            产品展示聚焦最终可交付产物：最新训练报告、最新模型评估报告、最新模型对比报告、数据质检报告，以及含数据指纹的 YAML 配置文件。
+          </p>
+        </div>
+
+        <div class="showcase">
+          <div class="preview">
+            <iframe title="最新训练报告预览" src="../runs/detect_train/train/report.html"></iframe>
+            <div class="preview-body">
+              <h3>模型训练报告</h3>
+              <p>最新训练运行 fire_smoke_test，记录训练人、训练时间、GPU 环境、数据质量报告、超参数、mAP 和权重输出。</p>
+              <div class="doc-links">
+                <a href="../runs/detect_train/train/report.html">训练报告 HTML</a>
+                <a href="../runs/detect_train/train/report.md">训练报告 MD</a>
+                <a href="../runs/detect_train/train/od_audit.json">训练审计 JSON</a>
+              </div>
+            </div>
+          </div>
+          <div class="preview">
+            <iframe title="最新评估报告预览" src="../runs/eval/val-6/report.html"></iframe>
+            <div class="preview-body">
+              <h3>模型评估报告</h3>
+              <p>最新评估目录为 val-6，评估 train-20260710-095007-yolo11n-best 在 test 分片上的表现，并输出 PR 曲线、混淆矩阵和预测图。</p>
+              <div class="doc-links">
+                <a href="../runs/eval/val-6/report.html">评估报告 HTML</a>
+                <a href="../runs/eval/val-6/report.md">评估报告 MD</a>
+                <a href="../runs/eval/val-6/od_eval_audit.json">评估审计 JSON</a>
+              </div>
+            </div>
+          </div>
+          <div class="preview">
+            <div class="preview-body">
+              <h3>模型对比报告</h3>
+              <p>最新对比报告位于 compare_20260710_095846，对比 train-4-20260707-233005-yolo11n-best 与 train-20260710-095007-yolo11n-best 在同一 fire.yaml test 分片上的指标。</p>
+              <table>
+                <thead>
+                  <tr><th>模型</th><th>mAP@50</th><th>mAP@50-95</th><th>Recall</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>train-4-20260707-233005</td><td>0.8515</td><td>0.4586</td><td>0.8491</td></tr>
+                  <tr><td>train-20260710-095007</td><td>0.4684</td><td>0.1646</td><td>0.5408</td></tr>
+                </tbody>
+              </table>
+              <div class="doc-links">
+                <a href="../runs/compare/compare_20260710_095846/report.md">模型对比 report.md</a>
+              </div>
+            </div>
+          </div>
+          <div class="preview">
+            <iframe title="最新数据质检报告预览" src="../runs/data_validation/20260710_094706/report.html"></iframe>
+            <div class="preview-body">
+              <h3>数据质检与指纹 YAML</h3>
+              <p>质检报告包包含 JSON、CSV、HTML、DOCX；fire.yaml 记录数据指纹、类别表、split 统计和 preserve 划分策略。</p>
+              <div class="doc-links">
+                <a href="../runs/data_validation/20260710_094706/report.html">质检 report.html</a>
+                <a href="../runs/data_validation/20260710_094706/report.docx">质检 report.docx</a>
+                <a href="../apps/platform/configs/datasets/fire.yaml">含数据指纹 fire.yaml</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:18px">
+          <h3>关键产物一览</h3>
+          <table>
+            <thead>
+              <tr><th>产物类型</th><th>位置</th><th>展示重点</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>数据集 YAML</td><td>apps/platform/configs/datasets/fire.yaml</td><td>类别、split、数据指纹、样本数量</td></tr>
+              <tr><td>训练报告</td><td>runs/detect_train/train/report.html</td><td>训练配置、训练结果、权重路径、审计信息</td></tr>
+              <tr><td>评估报告</td><td>runs/eval/val-6/report.html</td><td>test 分片指标、逐类指标、混淆矩阵和预测图</td></tr>
+              <tr><td>对比报告</td><td>runs/compare/compare_20260710_095846/report.md</td><td>项目内两个模型的 mAP、Precision、Recall 横向比较</td></tr>
+              <tr><td>数据质检</td><td>runs/data_validation/20260710_094706/</td><td>质量状态、问题 CSV、HTML/Word 报告</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="summary">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">07 Summary</span>
+            <h2>项目总结</h2>
+          </div>
+          <p>
+            本项目完成了从算法实验到工程平台的跃迁，但在真实生产环境、模型泛化能力、持续数据闭环方面仍有提升空间。
+          </p>
+        </div>
+
+        <div class="pros-cons">
+          <div class="card">
+            <h3>项目优点</h3>
+            <ul class="clean">
+              <li>链路完整：覆盖数据处理、质检、配置、训练、评估、推理、报告和 GUI。</li>
+              <li>可追溯性强：数据指纹、审计快照、训练报告、评估报告能复盘每次实验。</li>
+              <li>工程扩展性好：注册表机制用于划分策略、质检项、帧源，后续加模块成本低。</li>
+              <li>展示交付友好：HTML、Word、CSV、Markdown 多种报告格式适合答辩与归档。</li>
+              <li>客户端完整度高：桌面端覆盖项目、数据、质检、配置、训练、推理等核心流程。</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>项目不足</h3>
+            <ul class="clean">
+              <li>模型仍偏轻量，复杂烟雾、遮挡、小火源、夜间低质画面下泛化能力有待扩充数据验证。</li>
+              <li>当前训练主要基于 CPU 环境记录，完整 GPU 训练与长期稳定性测试还可以加强。</li>
+              <li>质检已能发现数据问题，但自动修复、主动再采样和数据版本管理还未完全自动化。</li>
+              <li>桌面端已完成主体页面，仍需要更多空状态、异常提示、打包发布与用户体验打磨。</li>
+              <li>推理预警尚停留在本地检测，后续可接入消息通知、监控平台和边缘设备联动。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:18px">
+          <h3>后续展望</h3>
+          <p>
+            下一步可围绕“更强模型、更真实数据、更自动闭环”推进：增加烟雾与早期火苗类别，扩充多场景数据；
+            引入主动学习筛选低置信样本；完善桌面端打包发布、异常提示和报告输出，让 GUI 成为一体化操作台。
+          </p>
+        </div>
+      </section>
+
+      <div class="footer">
+        <p>答辩材料生成位置：docs/fire_detection_defense.html。建议用浏览器打开并全屏展示。</p>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
